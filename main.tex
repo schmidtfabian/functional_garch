@@ -1,0 +1,124 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath,amsfonts,amscd,amsthm}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue
+    }
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{multirow,booktabs}
+\usepackage{graphics,subfig}
+\usepackage{setspace}
+\usepackage{changepage}
+\usepackage{multicol}
+\usepackage[retainorgcmds]{IEEEtrantools}
+\usepackage{geometry}
+\usepackage{dcolumn}
+\newlength{\tabcont}
+\setlength{\parindent}{0.0in}
+\setlength{\parskip}{0.05in}
+\usepackage{natbib}
+\geometry{top=2cm,bottom=2cm,left=3cm,right=2cm, headsep=0in}
+\parindent 0in
+\parskip 12pt
+\linespread{1.5}
+
+\theoremstyle{plain}
+\newtheorem{assumption}{Assumption}
+\renewcommand{\baselinestretch}{1.5} 
+
+\title{Master Thesis Topic}
+\author{Fabian Schmidt}
+\date{\today}
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+            
+        \huge
+        \textbf{Functional GARCH models and their Application to intraday value-at-risk}
+            
+        \vspace{1cm}
+        \large
+        Master Thesis Presented to the\\
+        Department of Economics at the\\
+        Rheinische Friedrich-Wilhelm-Universität Bonn
+            
+        \vspace{1.5cm}
+            
+        In Partial Fulfillment of the Requirements of the Degree of\\
+        Master of Science (M.Sc.)
+            
+        \vspace{4.5cm}
+            
+        \large
+        Supervisor: Prof. Dr. Dominik Liebl
+
+        \vspace{1.5cm}
+        Submitted in by:\\
+        Fabian Schmidt\\
+        Matriculation number: 50092796
+            
+    \end{center}
+\end{titlepage}
+
+\section{Introduction}
+\label{sec:Introduction}
+
+\section{Functional GARCH}
+\label{sec:FGARCH}
+\subsection{(Scalar) GARCH and Multivariate GARCH}
+Before I turn to the functional GARCH model, I will focus on the scalar version of the GARCH model, both in the univariate and multivariate cases.\\
+The GARCH model, a generalization of the previously published ARCH model by \citet{Engle1982}, was introduced by \citet{Bollerslev1986}. (G)ARCH models fundamentally differentiate themselves from typical time series models, such as ARMA or VAR models. Instead of modeling the relationship between the observed values themselves and their previously observed values, the relationship between the squared observed values and their previous squared values is modeled.
+An univariate GARCH(p,q) process can be represented as follows:
+\begin{align}
+    y_t &= \sigma_t\varepsilon_t \\
+    \sigma_t^2 &= \delta + \sum_i^p \alpha_i y_{t-i}^2 + \sum_j^q \beta_j \sigma_{t-i}^2
+\end{align}
+where $E[\varepsilon_t|\varepsilon_j, j<t]=0$ and $\mathrm{Var}[\varepsilon_t]=\sigma_t^2$. Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha_i$, and $\beta_j$ have to be estimated. 
+\subsection{Model}
+
+\subsection{Estimation}
+\begin{align}
+    s_i^{(2)}=\mathbf{d}+\mathbf{Ay_{i-1}^{(2)}}+\mathbf{Bs_{i-1}^{(2)}}
+\end{align}
+\begin{align}
+    s_i^{(2)}=\sum_{\ell=1}^{\infty} \mathbf{B}^{\ell-1}\mathbf{d}+\sum_{\ell=1}^{\infty}\mathbf{B}^{\ell-1}\mathbf{Ay}_{i-\ell}^{(2)}
+\end{align}
+\begin{align}
+    \tilde{s}_i^{(2)}=\tilde{s}_i^{(2)}(\underline{\theta})=\sum_{\ell=1}^{\infty}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{d}}+\sum_{\ell=1}^{\infty}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{A}}\mathbf{y}_{i-\ell}^{(2)}
+\end{align}
+\begin{align}
+    \hat{s}_i^{(2)}=\hat{s}_i^{(2)}(\underline{\theta})=\sum_{\ell=1}^{i-1}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{d}}+\sum_{\ell=1}^{i-1}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{A}}\mathbf{y}_{i-\ell}^{(2)}
+\end{align}
+\begin{align}
+    \underline{\hat{\theta}}_n=argmin\{S_n(\underline{\theta})=\sum_{i=2}^n\{y_i^{(2)}-\hat{s}_i^{(2)} \}^{\top}\{y_i^{(2)}-\hat{s}_i^{(2)} \}:\underline{\theta}\in\Theta\}
+\end{align}
+\section{Simulation Study}
+\label{sec:Simulation}
+
+\subsection{Simulation 1}
+\begin{align}
+    \varepsilon_i(t)=\frac{\sqrt{\log2}}{2^{200t}}\cdot B_i \left( \frac{2^{400t}}{\log2}\right); (B_i:i\in \mathbb{Z})
+\end{align}
+\subsection{Simulation 2}
+\section{Discussion}
+\label{sec:Discussion}
+In this thesis, I have presented the Functional GARCH model and
+\newpage
+{\setstretch{0.6}
+\bibliographystyle{agsm}
+\bibliography{bibliography}
+}
+
+\section*{Appendix}
+\label{sec:Appendix}
+\renewcommand{\thesubsection}{\Alph{subsection}}
+
+\end{document}
