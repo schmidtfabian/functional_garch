@@ -1,8 +1,6 @@
 #### Setup ####
 rm(list=ls())
 library(fda)
-library(rugarch)
-library(nloptr)
 
 #### Simulation ####
 
@@ -89,7 +87,7 @@ y_matrix_squared_fd.pca <- pca.fd(y_matrix_squared_fd$fd, nharm = 1, centerfns =
 y_matrix_squared_fd.pca$varprop
 
 #### Plotting ####
-#Plot the last 5 curves
+#Plot the first 5 curves
 first_indices_estimation <- 1:5
 
 par(mfrow = c(5, 1), mar = c(3, 4, 2, 1))  # layout 5x1
@@ -111,6 +109,7 @@ for (i in first_indices_estimation) {
 
 par(mfrow=c(1,1))
 
+# Comparing optimal PC with first FPC
 plot(y_matrix_squared_fd.pca$harmonics, lwd = 3)
 lines(optimal_pc_fd)
 
@@ -212,36 +211,6 @@ res2QML <- optim(
 
 res2QML$par
 
-#### For comparison try estimating FGARCH with univariate (scalar) GARCH model package ####
-
-specs_garch_model <- ugarchspec(
-  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
-  mean.model = list(armaOrder = c(0, 0), include.mean = FALSE),
-  distribution.model = "norm"  # <- use "norm" but interpret as QMLE
-)
-
-fit_estimated_PC_scores <- ugarchfit(spec = specs_garch_model, data = scores_y_squared)
-
-coef(fit_estimated_PC_scores)
-
-fit_optimal_PC_scores <- ugarchfit(spec = specs_garch_model, data = scores_y_optimal_pc)
-
-coef(fit_optimal_PC_scores)
-
-
-#### Plotting ####
-
-alpha_kernel <- outer(t_grid, t_grid, alpha_function)
-
-beta_kernel <- outer(t_grid, t_grid, beta_function)
-
-par(mfrow = c(2, 2), mar = c(1, 2, 3, NA))  # layout 5x1
-
-persp(t_grid, t_grid, alpha_kernel,
-      theta = 30, phi = 30,
-      main = "Perspective Plot" , sub = "True Kernel",
-      col = "grey")
-
 
 #### Estimating fitted values ####
 PC_estimated_basis <- PC_estimated$basis
@@ -310,43 +279,8 @@ for (i in first_indices_estimation) {
        xlim = c(0,1))
   abline(h = 0, col = "gray")
 }
-
-for (i in first_indices_estimation) {
-  plot(t_grid, sigma_squared_matrix[(size_burn_in_sample +i), ], type = "l", col = "black",
-       main = paste("real sigma_", i, "(t)^2", sep=""), xlab = "t", ylab = "sigma_i(t)^2",
-       xlim = c(0,1))
-  abline(h = 0, col = "gray")
-}
 # Plot the estimated curves
 for (i in first_indices_estimation) {
-  plot(t_grid, sigma_squared_optimal_PC[i,], type = "l", col = "black",
-       main = paste("estimated sigma_", i, "(t)^2", sep=""), xlab = "t", ylab = "sigma_i(t)^2",
-       xlim = c(0,1))
-  abline(h = 0, col = "gray")
-}
-
-for (i in last_indices_estimation) {
-  plot(t_grid, sigma_squared_matrix[(size_burn_in_sample +i), ], type = "l", col = "black",
-       main = paste("real sigma_", i, "(t)^2", sep=""), xlab = "t", ylab = "sigma_i(t)^2",
-       xlim = c(0,1))
-  abline(h = 0, col = "gray")
-}
-# Plot the estimated curves
-for (i in last_indices_estimation) {
-  plot(t_grid, sigma_squared_estimated_PC[i,], type = "l", col = "black",
-       main = paste("estimated sigma_", i, "(t)^2", sep=""), xlab = "t", ylab = "sigma_i(t)^2",
-       xlim = c(0,1))
-  abline(h = 0, col = "gray")
-}
-
-for (i in last_indices_estimation) {
-  plot(t_grid, sigma_squared_matrix[(size_burn_in_sample +i), ], type = "l", col = "black",
-       main = paste("real sigma_", i, "(t)^2", sep=""), xlab = "t", ylab = "sigma_i(t)^2",
-       xlim = c(0,1))
-  abline(h = 0, col = "gray")
-}
-# Plot the estimated curves
-for (i in last_indices_estimation) {
   plot(t_grid, sigma_squared_optimal_PC[i,], type = "l", col = "black",
        main = paste("estimated sigma_", i, "(t)^2", sep=""), xlab = "t", ylab = "sigma_i(t)^2",
        xlim = c(0,1))
@@ -371,7 +305,7 @@ Bootstrap_samples <- 10000
 bootstrap_matrix <- matrix(NA, nrow = Bootstrap_samples, ncol = T_grid_points)
 for (i in 1:Bootstrap_samples){
   for (j in 1:T_grid_points){
-    bootstrap_matrix[i,j] <- sample(epsilon_fitted_optimal_pc[,j], size = 1, replace = FALSE)
+    bootstrap_matrix[i,j] <- sample(epsilon_fitted_optimal_pc[,j], size = 1, replace = FALSE) # I am not sure if this is correct or the entire curve should be resampled.
   }
 }
 
@@ -390,21 +324,22 @@ lines(t_grid, quantile_matrix[1,], col = "yellow")
 #### Forecasting Value-at-risk ####
 
 y_matrix_evaluation_squared <- y_matrix_evaluation^2
-sigma_squared_estimated_PC_eval <- matrix(data = NA, nrow = size_eval_sample, ncol = T_grid_points)
-sigma_squared_estimated_PC_eval[1,] <- delta_vector_estimated_PC +
-  as.vector(alpha_kernel_matrix_estimated_PC %*% y_matrix_squared[size_training_sample,]) +
-  as.vector(beta_kernel_matrix_estimated_PC %*% sigma_squared_estimated_PC[size_training_sample,])
+sigma_squared_optimal_PC_eval <- matrix(data = NA, nrow = size_eval_sample, ncol = T_grid_points)
+sigma_squared_optimal_PC_eval[1,] <- delta_vector_optimal_PC +
+  as.vector(alpha_kernel_matrix_optimal_PC %*% y_matrix_squared[size_training_sample,]) +
+  as.vector(beta_kernel_matrix_optimal_PC %*% sigma_squared_optimal_PC[size_training_sample,])
 for (i in 2:size_eval_sample){
-  sigma_squared_estimated_PC_eval[i,] <- delta_vector_estimated_PC +
-    as.vector(alpha_kernel_matrix_estimated_PC %*% y_matrix_evaluation_squared[i-1,])*t_difference +
-    as.vector(beta_kernel_matrix_estimated_PC %*% sigma_squared_estimated_PC_eval[i-1, ])*t_difference
+  sigma_squared_optimal_PC_eval[i,] <- delta_vector_optimal_PC +
+    as.vector(alpha_kernel_matrix_optimal_PC %*% y_matrix_evaluation_squared[i-1,])*t_difference +
+    as.vector(beta_kernel_matrix_optimal_PC %*% sigma_squared_optimal_PC_eval[i-1, ])*t_difference
 }
 
 y_matrix_VAR_forecast_quantile_1 <- matrix(data = NA, nrow = size_eval_sample, ncol = T_grid_points)
-y_matrix_VAR_forecast_quantile_1 <- quantile_matrix[1,]*sqrt(sigma_squared_estimated_PC_eval)
+y_matrix_VAR_forecast_quantile_1 <- quantile_matrix[1,]*sqrt(sigma_squared_optimal_PC_eval)
 
 indicator_matrix_real_VAR <- y_matrix_evaluation > y_matrix_VAR_forecast_quantile_1
 total_deviation <- quantiles_VAR[1] - (1 - mean(as.numeric(indicator_matrix_real_VAR), na.rm = TRUE))
+1 - mean(as.numeric(indicator_matrix_real_VAR), na.rm = TRUE)
 total_deviation
 
 #### Plotting ####
@@ -420,3 +355,13 @@ for (i in first_indices_estimation) {
 }
 
 par(mfrow=c(1,1))
+
+
+#### Remaining issues ####
+
+# Estimated PC is negative at t=1
+test_eval <- eval.fd(t_grid, y_matrix_squared_fd.pca$harmonics)
+
+# Estimated PC only accounts for 30% of the variance compared to 70% in the paper.
+
+# I am not sure if I understand the Bootstrap passage correctly.
