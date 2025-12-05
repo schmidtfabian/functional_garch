@@ -1,6 +1,5 @@
 #### Setup ####
 rm(list=ls())
-library(fda)
 
 #### Simulation ####
 
@@ -11,10 +10,13 @@ size_eval_sample <- 200
 N_observations <- size_burn_in_sample + size_training_sample + size_eval_sample
 T_grid_points <- 285
 t_grid <- seq(0, 1, length.out = T_grid_points)
-t_difference <- 1 / T_grid_points
+t_difference <- 1 / (T_grid_points-1)
 
 delta_vector <- rep(0.01, T_grid_points)
-alpha_function <- beta_function <- function(s, t) 12*t*(1-t)*s*(1-s)
+alpha_function <- beta_function <- function(t, s) 12*t*(1-t)*s*(1-s)
+
+alpha_kernel_matrix <- outer(t_grid, t_grid, alpha_function)
+beta_kernel_matrix <- outer(t_grid, t_grid, beta_function)
 
 sigma_squared_matrix <- matrix(0, N_observations, T_grid_points)
 y_matrix <- matrix(0, N_observations, T_grid_points)
@@ -35,25 +37,49 @@ epsilon_function <- function(t) {
   B <- cumsum(increments)
   
   # Step 4: Compute epsilon_i(t)
-  scale_factor <- sqrt(log(2)) / (2^(200 * t))
+  scale_factor <- (sqrt(log(2))) / (2^(200 * t))
   epsilon <- scale_factor * B
   
   return(epsilon)
 }
 
+epsilon_function_test <- function(t_grid,
+                                    lambda = 200 * log(2),
+                                    sigma  = 20 * sqrt(log(2)),
+                                    X0 = 0) {
+  # t_grid: numeric vector of time points (must be sorted and unique)
+  # lambda: mean-reversion speed
+  # sigma:  diffusion parameter
+  # X0:     initial value at t_grid[1]
+  
+  # Ensure the grid is sorted
+  t_grid <- sort(t_grid)
+  n <- length(t_grid)
+  
+  # Pre-allocate output
+  X <- numeric(n)
+  X[1] <- X0
+  
+  # Simulate increments
+  for (i in 2:n) {
+    dt <- t_grid[i] - t_grid[i-1]        # variable time step
+    dW <- sqrt(dt) * rnorm(1)            # Brownian increment
+    X[i] <- X[i-1] + (-lambda * X[i-1]) * dt + sigma * dW
+  }
+  
+  return(X)
+}
 
 
 
 for (i in 1:N_observations) {
   if (i > 1) {
     sigma_squared_matrix[i,] <- delta_vector +
-      sapply(t_grid, function(t)
-        sum(alpha_function(t, t_grid) * y_matrix[i-1,]^2) * t_difference) +
-      sapply(t_grid, function(t)
-        sum(beta_function(t, t_grid) * sigma_squared_matrix[i-1,]) * t_difference)
+      as.vector(alpha_kernel_matrix %*% y_matrix[i-1,]^2) * t_difference +
+      as.vector(beta_kernel_matrix %*% sigma_squared_matrix[i-1,]) * t_difference
   }
   
-  y_matrix[i,] <- sqrt(sigma_squared_matrix[i,]) * epsilon_function(t_grid)
+  y_matrix[i,] <- sqrt(sigma_squared_matrix[i,]) * epsilon_function_test(t_grid)
 }
 
 #y_matrix_burn_in <- y_matrix[1:size_burn_in_sample,] # remove burn in sample
@@ -63,64 +89,67 @@ y_matrix <- y_matrix[(size_burn_in_sample+1):(size_burn_in_sample + size_trainin
 
 #### Principal Components Estimation ####
 
-# Demean y and create squared matrix
-#y_matrix <- sweep(y_matrix,2,colMeans(y_matrix), FUN = "-")
+
 y_matrix_squared <- y_matrix^2
+# Demean y^2 and create covariance matrix
+y_matrix_squared_mean_function <- colMeans(y_matrix_squared)
+y_matrix_squared_demeaned <- matrix(NA, nrow = size_training_sample, ncol = T_grid_points)
+for (i in 1:size_training_sample) {
+  y_matrix_squared_demeaned[i,] <- y_matrix_squared[i,] - y_matrix_squared_mean_function 
+}
+y_squared_covariance_matrix <- t(y_matrix_squared_demeaned)%*%y_matrix_squared_demeaned*(1/size_training_sample)*t_difference
+y_squared_covariance_matrix.eigen <- eigen(y_squared_covariance_matrix)
+estimated_first_PC <- y_squared_covariance_matrix.eigen$vectors[,1]
+variance_explained_first_PC <- y_squared_covariance_matrix.eigen$values[1]/(sum(y_squared_covariance_matrix.eigen$values))
+variance_explained_first_PC
 
-# Smooth Curves
-K <- 50
-BK.basis <- create.bspline.basis(rangeval=c(0,1), nbasis=K)
-BK.basis_Parobj <- fdPar(BK.basis, Lfdobj = 2, # states that the second derivative is penalized 
-                         lambda = 1e-3)
+# eigen() returns PCs with Euclidean norm = 1 (sum(v^2) = 1). 
+# But functional PCs must satisfy the continuous L2 norm: sum(v^2 * dt) = 1.
+# Since dt = 1/(T-1), the eigenvector is too small by factor 1/sqrt(dt).
+# Therefore we rescale: estimated_first_PC <- estimated_first_PC / sqrt(t_difference) 
+# (and optionally flip its sign to match the theoretical direction).
+if (mean(estimated_first_PC)< 0) {
+  estimated_first_PC <- -1 * estimated_first_PC * 1/sqrt(t_difference)
+} else {
+  estimated_first_PC <- estimated_first_PC * 1/sqrt(t_difference)
+}
 
-y_matrix_squared_fd <- smooth.basis(y=t(y_matrix_squared), fdParobj = BK.basis_Parobj, argvals = t_grid)
-y_matrix_fd <- smooth.basis(y=t(y_matrix), fdParobj = BK.basis_Parobj, argvals = t_grid)
 
-# Create smoothed y and optimal Principal Component for plotting
-y_eval <- t(eval.fd(t_grid, y_matrix_fd$fd))
-optimal_pc <- function(t) sqrt(30)*t*(1-t)
-optimal_pc_fd <- smooth.basis(argvals = t_grid, y = optimal_pc(t_grid), fdParobj = BK.basis_Parobj)
-optimal_pc_fd <- optimal_pc_fd$fd
 
-# Estimate FPC
-y_matrix_squared_fd.pca <- pca.fd(y_matrix_squared_fd$fd, nharm = 1, centerfns = TRUE)
-y_matrix_squared_fd.pca$varprop
+optimal_pc_function <- function(t) sqrt(30)*t*(1-t)
+optimal_pc <- optimal_pc_function(t_grid)
 
 #### Plotting ####
 #Plot the first 5 curves
 first_indices_estimation <- 1:5
 
-par(mfrow = c(5, 1), mar = c(3, 4, 2, 1))  # layout 5x1
+layout(mat = matrix(data = c(1,2,3,4,5,0), byrow = TRUE, nrow = 3))
 
 for (i in first_indices_estimation) {
   plot(t_grid, y_matrix[i, ], type = "l", col = "black",
        main = paste("y_", i, "(t)", sep=""), xlab = "t", ylab = "y_i(t)",
-       xlim = c(0,1))
+       xlim = c(0,1), ylim = c(-0.75,0.75))
   abline(h = 0, col = "gray")
 }
-# Plot the smooth curves
+
+
 for (i in first_indices_estimation) {
-  plot(t_grid, y_eval[i,], type = "l", col = "black",
-       main = paste("y_", i, "(t)", sep=""), xlab = "t", ylab = "y_i(t)",
+  plot(t_grid, y_matrix_squared[i, ], type = "l", col = "black",
+       main = paste("y_", i, "(t)^2", sep=""), xlab = "t", ylab = "y_i(t)^2",
        xlim = c(0,1))
   abline(h = 0, col = "gray")
 }
-
-
-par(mfrow=c(1,1))
+layout(1)
 
 # Comparing optimal PC with first FPC
-plot(y_matrix_squared_fd.pca$harmonics, lwd = 3)
-lines(optimal_pc_fd)
+plot(t_grid,optimal_pc, type = "l", ylim = c(0,1.75))
+lines(t_grid, estimated_first_PC)
 
 
 #### GARCH model estimation ####
 
-# create basis based on the first principal component
-PC_estimated <- y_matrix_squared_fd.pca$harmonics[1]
-
 # Project y_matrix_squared into finite dimensional basis
-scores_y_squared <- as.vector(inprod(y_matrix_squared_fd$fd, PC_estimated))
+scores_y_squared <- as.vector(y_matrix_squared%*% estimated_first_PC*t_difference)
 
 # Function to compute the conditional variances given parameters
 garch_variance <- function(params, y) {
@@ -186,7 +215,7 @@ res1QML$par
 
 ### Same estimation now with perfect PC
 
-scores_y_optimal_pc <- as.vector(inprod(y_matrix_squared_fd$fd,optimal_pc_fd))
+scores_y_optimal_pc <- as.vector(y_matrix_squared %*% optimal_pc*t_difference)
 
 # Estimate using nonlinear minimization
 res2ls <- optim(
@@ -213,45 +242,30 @@ res2QML$par
 
 
 #### Estimating fitted values ####
-PC_estimated_basis <- PC_estimated$basis
-PC_estimated_coefs <- as.vector(PC_estimated$coefs)
 
-alpha_kernel_estimated_PC_fd <- bifd(coef = res1ls$par[2]*(PC_estimated_coefs%o%PC_estimated_coefs), sbasisobj = PC_estimated_basis, tbasisobj = PC_estimated_basis) 
-beta_kernel_estimated_PC_fd <- bifd(coef = res1ls$par[3]*(PC_estimated_coefs%o%PC_estimated_coefs), sbasisobj = PC_estimated_basis, tbasisobj = PC_estimated_basis) 
+alpha_kernel_matrix_estimated_PC <- res1ls$par[2]*estimated_first_PC %o% estimated_first_PC
+beta_kernel_matrix_estimated_PC <- res1ls$par[3]*estimated_first_PC %o% estimated_first_PC
 
-delta_function_estimated_PC_fd <- res2ls$par[1]*PC_estimated
-
-alpha_kernel_matrix_estimated_PC <- eval.bifd(t_grid, t_grid, alpha_kernel_estimated_PC_fd)
-beta_kernel_matrix_estimated_PC <- eval.bifd(t_grid, t_grid, beta_kernel_estimated_PC_fd)
-
-delta_vector_estimated_PC <- as.vector(eval.fd(t_grid, delta_function_estimated_PC_fd))
+delta_vector_estimated_PC <- res1ls$par[1]*estimated_first_PC
 
 sigma_squared_estimated_PC <- matrix(NA, nrow = dim(y_matrix_squared)[1], ncol = T_grid_points)
-mean_y_matrix_squared <- colMeans(y_matrix_squared)
-sigma_squared_estimated_PC[1,] <- delta_vector_estimated_PC + as.vector(alpha_kernel_matrix_estimated_PC %*% y_matrix_squared[1,])
+sigma_squared_estimated_PC[1,] <- delta_vector_estimated_PC + as.vector(alpha_kernel_matrix_estimated_PC %*% y_matrix_squared_mean_function)*t_difference
 for (i in 2:dim(y_matrix_squared)[1]){
   sigma_squared_estimated_PC[i,] <- delta_vector_estimated_PC +
     as.vector(alpha_kernel_matrix_estimated_PC %*% y_matrix_squared[i-1,])*t_difference +
     as.vector(beta_kernel_matrix_estimated_PC %*% sigma_squared_estimated_PC[i-1, ])*t_difference
 }
 
+epsilon_fitted_estimated_PC <- y_matrix/sqrt(sigma_squared_estimated_PC)
 
 
-optimal_PC_basis <- optimal_pc_fd$basis
-optimal_PC_coefs <- as.vector(optimal_pc_fd$coefs)
+alpha_kernel_matrix_optimal_PC <- res2ls$par[2]*optimal_pc %o% optimal_pc
+beta_kernel_matrix_optimal_PC <- res2ls$par[3]*optimal_pc %o% optimal_pc
 
-alpha_kernel_optimal_PC_fd <- bifd(coef = res1ls$par[2]*(optimal_PC_coefs%o%optimal_PC_coefs), sbasisobj = optimal_PC_basis, tbasisobj = optimal_PC_basis) 
-beta_kernel_optimal_PC_fd <- bifd(coef = res1ls$par[3]*(optimal_PC_coefs%o%optimal_PC_coefs), sbasisobj = optimal_PC_basis, tbasisobj = optimal_PC_basis) 
-
-delta_function_optimal_PC_fd <- res2ls$par[1]*optimal_pc_fd
-
-alpha_kernel_matrix_optimal_PC <- eval.bifd(t_grid, t_grid, alpha_kernel_optimal_PC_fd)
-beta_kernel_matrix_optimal_PC <- eval.bifd(t_grid, t_grid, beta_kernel_optimal_PC_fd)
-
-delta_vector_optimal_PC <- as.vector(eval.fd(t_grid, delta_function_optimal_PC_fd))
+delta_vector_optimal_PC <- res2ls$par[1]*optimal_pc
 
 sigma_squared_optimal_PC <- matrix(NA, nrow = dim(y_matrix_squared)[1], ncol = T_grid_points)
-sigma_squared_optimal_PC[1,] <- delta_vector_optimal_PC + as.vector(alpha_kernel_matrix_optimal_PC %*% y_matrix_squared[1,])
+sigma_squared_optimal_PC[1,] <- delta_vector_optimal_PC + as.vector(alpha_kernel_matrix_optimal_PC %*% y_matrix_squared_mean_function)*t_difference
 for (i in 2:dim(y_matrix_squared)[1]){
   sigma_squared_optimal_PC[i,] <- delta_vector_optimal_PC +
     as.vector(alpha_kernel_matrix_optimal_PC %*% y_matrix_squared[i-1,])*t_difference +
@@ -302,23 +316,36 @@ plot(t_grid, 0.01-delta_vector_estimated_PC)
 
 
 Bootstrap_samples <- 10000
-bootstrap_matrix <- matrix(NA, nrow = Bootstrap_samples, ncol = T_grid_points)
+bootstrap_matrix_estimated_PC <- matrix(NA, nrow = Bootstrap_samples, ncol = T_grid_points)
 for (i in 1:Bootstrap_samples){
-  for (j in 1:T_grid_points){
-    bootstrap_matrix[i,j] <- sample(epsilon_fitted_optimal_pc[,j], size = 1, replace = FALSE) # I am not sure if this is correct or the entire curve should be resampled.
-  }
+  bootstrap_matrix_estimated_PC[i,] <- sample(1:N_observations, size = 1, replace = FALSE)
 }
 
 quantiles_VAR <- c(0.025,0.01,0.005)
 
-quantile_matrix <- matrix(NA, nrow = length(quantiles_VAR), ncol = T_grid_points)
+quantile_matrix_estimated_PC <- matrix(NA, nrow = length(quantiles_VAR), ncol = T_grid_points)
 for (i in 1:T_grid_points){
-  quantile_matrix[,i] <- quantile(bootstrap_matrix[,i], probs = quantiles_VAR)
+  quantile_matrix_estimated_PC[,i] <- quantile(bootstrap_matrix_estimated_PC[,i], probs = quantiles_VAR)
 }
 
-plot(t_grid, quantile_matrix[3,], type = "l", ylim = c(-10,0), col = "blue")
-lines(t_grid, quantile_matrix[2,], col = "red")
-lines(t_grid, quantile_matrix[1,], col = "yellow")
+plot(t_grid, quantile_matrix_estimated_PC[3,], type = "l", ylim = c(-10,0), col = "blue")
+lines(t_grid, quantile_matrix_estimated_PC[2,], col = "red")
+lines(t_grid, quantile_matrix_estimated_PC[1,], col = "yellow")
+
+
+bootstrap_matrix_optimal_PC <- matrix(NA, nrow = Bootstrap_samples, ncol = T_grid_points)
+for (i in 1:Bootstrap_samples){
+  bootstrap_matrix_optimal_PC[i,] <- sample(epsilon_fitted_optimal_pc, size = 1, replace = FALSE)
+}
+
+quantile_matrix_optimal_PC <- matrix(NA, nrow = length(quantiles_VAR), ncol = T_grid_points)
+for (i in 1:T_grid_points){
+  quantile_matrix_optimal_PC[,i] <- quantile(bootstrap_matrix_optimal_PC[,i], probs = quantiles_VAR)
+}
+
+plot(t_grid, quantile_matrix_optimal_PC[3,], type = "l", ylim = c(-10,0), col = "blue")
+lines(t_grid, quantile_matrix_optimal_PC[2,], col = "red")
+lines(t_grid, quantile_matrix_optimal_PC[1,], col = "yellow")
 
 
 #### Forecasting Value-at-risk ####
@@ -359,9 +386,16 @@ par(mfrow=c(1,1))
 
 #### Remaining issues ####
 
-# Estimated PC is negative at t=1
-test_eval <- eval.fd(t_grid, y_matrix_squared_fd.pca$harmonics)
+# Estimated PC is negative
 
-# Estimated PC only accounts for 30% of the variance compared to 70% in the paper.
+# Estimated PC only accounts for little of the variance compared to 70% in the paper.
 
 # I am not sure if I understand the Bootstrap passage correctly.
+# draw many realizations of epsilon(t) from both functions and summarise
+n_samp <- 200  # how many independent epsilon paths to draw
+eps_mat <- matrix(NA, nrow = n_samp, ncol = T_grid_points)
+
+for (j in 1:n_samp) {
+  eps_mat[j, ] <- epsilon_function_test(t_grid)
+}
+matplot(t_grid, t(eps_mat[1:6,]), type = "l", lty = 1, main = "6 sample paths: epsilon_function()")
