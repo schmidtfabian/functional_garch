@@ -18,6 +18,7 @@
 \usepackage[retainorgcmds]{IEEEtrantools}
 \usepackage{geometry}
 \usepackage{dcolumn}
+\usepackage{cleveref}
 \newlength{\tabcont}
 \setlength{\parindent}{0.0in}
 \setlength{\parskip}{0.05in}
@@ -27,8 +28,11 @@
 \parskip 12pt
 \linespread{1.5}
 
-\theoremstyle{plain}
-\newtheorem{assumption}{Assumption}
+% The theoremstyle for a theorem goes right above the \newtheorem command
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\newtheorem{theorem}{Theorem}[section]
 \renewcommand{\baselinestretch}{1.5} 
 
 \title{Master Thesis Topic}
@@ -39,10 +43,10 @@
 
 \begin{titlepage}
     \begin{center}
-        \vspace*{1cm}
+        \vspace*{0.5cm}
             
         \huge
-        \textbf{Functional GARCH models and their Application to intraday value-at-risk}
+        \textbf{On Functional Garch Models and Their Application to Intraday Value-At-Risk}
             
         \vspace{1cm}
         \large
@@ -55,12 +59,12 @@
         In Partial Fulfillment of the Requirements of the Degree of\\
         Master of Science (M.Sc.)
             
-        \vspace{4.5cm}
+        \vspace{4cm}
             
         \large
         Supervisor: Prof. Dr. Dominik Liebl
 
-        \vspace{1.5cm}
+        \vspace{1cm}
         Submitted in by:\\
         Fabian Schmidt\\
         Matriculation number: 50092796
@@ -70,21 +74,64 @@
 
 \section{Introduction}
 \label{sec:Introduction}
-
+\begin{itemize}
+    \item Start with explanation of the history of interest in risk measures
+    \item transition to GARCH models and their usage when estimating risk $\longrightarrow$ name most important papers regarding GARCH models
+    \item transition to Functional Data Analysis and then Functional GARCH and its applications (literature)
+    \item explain structure and goal of the thesis
+\end{itemize}
 \section{Functional GARCH}
 \label{sec:FGARCH}
 \subsection{(Scalar) GARCH and Multivariate GARCH}
 Before I turn to the functional GARCH model, I will focus on the scalar version of the GARCH model, both in the univariate and multivariate cases.\\
-The GARCH model, a generalization of the previously published ARCH model by \citet{Engle1982}, was introduced by \citet{Bollerslev1986}. (G)ARCH models fundamentally differentiate themselves from typical time series models, such as ARMA or VAR models. Instead of modeling the relationship between the observed values themselves and their previously observed values, the relationship between the squared observed values and their previous squared values is modeled.
-An univariate GARCH(p,q) process can be represented as follows:
+The GARCH model, a generalization of the previously published ARCH model by \citet{Engle1982}, was introduced by \citet{Bollerslev1986}. (G)ARCH models fundamentally differentiate themselves from typical time series models, such as ARMA or VAR models. Instead of modeling the relationship between the observed values themselves and their previously observed values, the relationship between the squared observed values and their previous squared values is modeled. This is due to the following characteristics of financial time series data: Financial price data is generally not stationary but is more comparable to a random walk. Because of that, return data is typically used for modeling purposes. When examining return data, it can be seen that while return data itself displays almost no or small autocorrelations, squared or absolute return data does display significant autocorrelations. Furthermore, large fluctuations appear to occur in clusters that are recurrent but not periodic \citep{mandelbrot1963variation,taylor2011asset}. Therefore, (G)ARCH models try to model the relationship of squared returns.\\
+An univariate GARCH(p,q) model can be described by its first two moments:
+\begin{definition}[GARCH(p,q) Process]
+    A process $(\varepsilon_t)$ is called a GARCH(p,q) process if its first two conditional moments exist and satisfy:
+    \begin{enumerate}
+        \item $\mathrm{E}(y_t \,|\, y_u,u<t)=0, \quad \forall t\in\mathbb{Z}$.
+        \item There exist constants $\delta,\alpha_i,i=1,...,q$ and $\beta_j,j=1,...,p$ such that\\
+        \begin{align}
+            \sigma_t^2=\mathrm{Var}(y_t\,|\,y_u,u<t)=\delta+\sum_{i=0}^q\alpha_iy_{t-1}^2+\sum_{j=1}^p\beta_j\sigma_{t-1}^2
+        \end{align}
+    \end{enumerate}
+\end{definition}
+A more restrictive, but often useful definition of a GARCH process is a strong GARCH(p,q) process. A strong univariate GARCH(p,q) process can be represented as follows:
 \begin{align}
     y_t &= \sigma_t\varepsilon_t \\
     \sigma_t^2 &= \delta + \sum_i^p \alpha_i y_{t-i}^2 + \sum_j^q \beta_j \sigma_{t-i}^2
 \end{align}
-where $E[\varepsilon_t|\varepsilon_j, j<t]=0$ and $\mathrm{Var}[\varepsilon_t]=\sigma_t^2$. Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha_i$, and $\beta_j$ have to be estimated. 
+where $(\varepsilon_t)$ is $\mathrm{i.i.d.}$. Additionally, it is often assumed that $E[\varepsilon_t|\varepsilon_j, j<t]=0$ and $\mathrm{Var}[\varepsilon_t]=1$.\\
+I will focus on the strong GARCH(1,1) process since an equivalent functional version of this process is also used in \citet{Aue2017} as well as \citet{RICE20201023}.
+The simplest specification of this model is the GARCH(1,1) process. Nevertheless, this specification is also one of the most widely used in practice.\\ % Add reference!!!
+It can be shown that there exists a strictly stationary, non-anticipative, ergodic solution to the GARCH(1,1) process if the following condition is satisfied:
+\begin{theorem}[Strict stationarity of the strong GARCH(1,1) process]
+\label{stationarityscalarGARCH(1,1)}
+    If
+    \begin{align}
+        -\infty\leq \gamma &:=\mathrm{E}\,\ \mathrm{log}\{\alpha\varepsilon_t^2+\beta\}<0,
+    \end{align}
+    then the infinite sum
+    \begin{align}
+        h_t &= \left[ 1+\sum_{i=0}^{\infty}a(\varepsilon_{t-1})...a(\varepsilon_{t-i}) \right]\delta; \quad a(z)=\alpha z^2+\beta
+    \end{align}
+    converges almost surely, and the process $(y_t)$ defined by $y_t=\sqrt{h_t}\varepsilon_t$ is the unique strictly stationary solution of model (2.7). This solution is non-anticipative and ergodic.
+\end{theorem}
+To prove \ref{stationarityscalarGARCH(1,1)}, note that Equation (3) can be solved recursively to attain $h_t$. Showing that $h_t$ converges then involves the application of the Cauchy Root Test. The complete proof can be found in the Appendix.\\ % Maybe try using Cleveref here if there is time.
+Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha_i$, and $\beta_j$ have to be estimated. GARCH models are typically estimated using quasi-maximum likelihood estimation. Quasi-maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to...% add here reference to efficiency gains (reference is in Cerovecki) and fourth moments (reference in Franq)
 \subsection{Model}
-
+\begin{itemize}
+    \item Stationarity
+    \item Ergodicity
+\end{itemize}
 \subsection{Estimation}
+\begin{itemize}
+    \item Projection onto finite dimensional basis
+    \item Least Squares Minimization problem
+    \item Solving Least Squares (Connection to uni-/ multivariate GARCH models)
+    \item Asymptotic results
+    \item (Quasi-Maximum Likelihood Estimation?)
+\end{itemize}
 \begin{align}
     s_i^{(2)}=\mathbf{d}+\mathbf{Ay_{i-1}^{(2)}}+\mathbf{Bs_{i-1}^{(2)}}
 \end{align}
@@ -100,16 +147,34 @@ where $E[\varepsilon_t|\varepsilon_j, j<t]=0$ and $\mathrm{Var}[\varepsilon_t]=\
 \begin{align}
     \underline{\hat{\theta}}_n=argmin\{S_n(\underline{\theta})=\sum_{i=2}^n\{y_i^{(2)}-\hat{s}_i^{(2)} \}^{\top}\{y_i^{(2)}-\hat{s}_i^{(2)} \}:\underline{\theta}\in\Theta\}
 \end{align}
+
+\subsection{Value-at-risk}
+\begin{itemize}
+    \item Explanation of the concept of value-at-risk
+\end{itemize}
 \section{Simulation Study}
 \label{sec:Simulation}
-
+\begin{itemize}
+    \item Explain bootstrapping and Probability scoring measures
+\end{itemize}
 \subsection{Simulation 1}
+\begin{itemize}
+    \item Similar to Aue et al. Show simulation where the method works.
+\end{itemize}
 \begin{align}
     \varepsilon_i(t)=\frac{\sqrt{\log2}}{2^{200t}}\cdot B_i \left( \frac{2^{400t}}{\log2}\right); (B_i:i\in \mathbb{Z})
 \end{align}
 \subsection{Simulation 2}
+\begin{itemize}
+    \item Simulation 2 should demonstrate some of the weaknesses from the fGARCH model either by violating one of its assumptions or/and by giving reasons why the fGARCH model should be extended in some type of way (transition to fGARCH-X or fGARCH with multiple constant parameters or similar)
+\end{itemize}
 \section{Discussion}
 \label{sec:Discussion}
+\begin{itemize}
+    \item Summarize thesis
+    \item list possible extensions and literature that has already extended FGARCH
+    \item (Give outlook on future of risk measures? (Expected Shortfall?))
+\end{itemize}
 In this thesis, I have presented the Functional GARCH model and
 \newpage
 {\setstretch{0.6}
@@ -120,5 +185,8 @@ In this thesis, I have presented the Functional GARCH model and
 \section*{Appendix}
 \label{sec:Appendix}
 \renewcommand{\thesubsection}{\Alph{subsection}}
-
+\begin{align}
+    \varepsilon_i(t) = e^{-\frac{t}{2}}W_i(e^t)
+\end{align}
+Let $\sum a_n$ be a series with non-negative terms and let $\lambda = \varlimsup a_n^{1/n}$. Then (i) if $\lambda<1$ the series $\sum a_n$ converges, (ii) if $\lambda>1$ the series $\sum a_n$ diverges.
 \end{document}
