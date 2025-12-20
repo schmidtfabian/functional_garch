@@ -129,14 +129,15 @@ It can be shown that there exists a strictly stationary, non-anticipative, ergod
     \end{align}
     converges almost surely, and the process $(y_t)$ defined by $y_t=\sqrt{h_t}\varepsilon_t$ is the unique strictly stationary solution of model (2.7). This solution is non-anticipative and ergodic.
 \end{theorem}
-To prove \ref{stationarityscalarGARCH(1,1)}, note that Equation (\ref{Eq2StrongGARCH}) can be solved recursively to attain $h_t$. Showing that $h_t$ converges involves an application of the Cauchy Root Test. Uniqueness then follows by contradiction by assuming the existence of another solution and showing that it must coincide with the original solution. The complete proof can be found in the Appendix.\\ % Maybe try using Cleveref here if there is time.
+To prove \ref{stationarityscalarGARCH(1,1)}, note that Equation (\ref{Eq2StrongGARCH}) can be solved recursively to attain $h_t$. Showing that $h_t$ converges involves an application of the Cauchy Root Test. Uniqueness then follows by contradiction by assuming the existence of another solution and showing that it must coincide with the original solution. The complete proof can be found in the Appendix.\\ % Add a sentence on ergodicity and non-anticipativeness Maybe try using Cleveref here if there is time.
 %The more general proof for strong GARCH(p,q) processes follows a similar structure
-Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha_i$, and $\beta_j$ have to be estimated. GARCH models are typically estimated using quasi-maximum likelihood estimation. Quasi-maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to...% add here reference to efficiency gains (reference is in Cerovecki) and fourth moments (reference in Franq)
+Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha$, and $\beta$ have to be estimated. GARCH models are typically estimated using quasi-maximum likelihood estimation. Quasi-maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to...% add here reference to efficiency gains (reference is in Cerovecki) and fourth moments (reference in Franq)
 \subsection{Model}
 \begin{itemize}
     \item Stationarity
     \item Ergodicity
 \end{itemize}
+The next section will introduce the functional GARCH model and highlight its properties. I will start by defining the model itself.\\
 A functional GARCH process is defined as follows:
 \begin{definition}[Functional GARCH(p,q) Process]
 \label{fGARCH(p,q)}
@@ -148,14 +149,13 @@ A sequence of random functions $(y_i(t))$ is called a functional GARCH process i
 \end{definition}
 Here, $\delta(t)$ is a non-negative function and $(\alpha_j)_{j\in (1,...,p)}$ and $(\beta_k)_{k \in (1,...,q)}$ are both integral operators $\alpha_jx(t)=\int \alpha_j(t,s)x(s)ds$ ($\beta_jx(t)=\int \beta_j(t,s)x(s)ds$) that map non-negative functions to non-negative functions. $x$ here denotes an arbitrary element in $L^2[0,1]$. By convention, I restrict the intraday time variable to $t\in[0,1]$. This is without loss of generality, since data that does not follow this convention can easily be converted into this format. $\int_0^1$ is therefore shortened to $\int$. The second time variable $i$ denotes the trading day. $(\varepsilon_i(t))_{i\in\mathbb{Z}}$ are i.i.d. functions.\\
 From Definition \ref{fGARCH(p,q)}, it is easily seen that the Functional GARCH(p,q) process follows a similar functional structure to the strong (scalar) GARCH process. As a consequence, Definition \ref{fGARCH(p,q)} can also be rewritten into a similar ARMA-like structure like the scalar version in Equation (\ref{ARMAstructure}).\\
-\\
 \citet{Aue2017}, as well as \citet{RICE20201023}, focus on the Functional GARCH(1,1) model that reduces the equations of the Functional GARCH(p,q) model to:
 \begin{gather}
         y_i(t) = \sigma_i(t)\varepsilon_i(t)\\
         \sigma_i^2(t) = \delta(t)+\alpha y_{i-j}^2(t)+\beta\sigma_{i-k}^2(t)
 \end{gather}
-In the following, conditions for the existence of a stationary solution are discussed. \citet{Aue2017} derive the conditions both for the space $L^2[0,1]$ as well as the space of continuous functions $C[0,1]$. I will first focus on solutions in $L^2[0,1]$.\\
-
+In the following, conditions for the existence of a stationary solution to the Functional GARCH(1,1) model are discussed. \citet{Aue2017} derive the conditions both for the space $L^2[0,1]$ as well as the space of continuous functions $C[0,1]$. I will first focus on solutions in $L^2[0,1]$.\\
+To emphasize the condition necessary for the existence of a stationary solution, \citeauthor{Aue2017} rewrite
 \subsection{Estimation}
 \begin{itemize}
     \item Projection onto finite dimensional basis
@@ -164,6 +164,37 @@ In the following, conditions for the existence of a stationary solution are disc
     \item Asymptotic results
     \item (Quasi-Maximum Likelihood Estimation?)
 \end{itemize}
+%In this next section, the estimation of a functional GARCH(1,1) model will be discussed. To this end, it is assumed that there exists a finite sample of $N$ observed functions $(y_i(t))_{i\in[1,N]}$. In practice, functional objects are typically observed on a fine grid, however, here it is assumed that the functional objects themselves are observed or can be retrieved from the data.\\ My Version before refining with ChatGPT.
+In the following section, I address the estimation of a functional GARCH(1,1) model. I consider a setting in which a finite sample of $N$ functional observations $\{y_i(t)\}_{i=1}^N$ is available. Although functional data are commonly recorded on a dense discrete grid in practical applications, I assume here that the underlying functional forms are directly observed or can be reliably reconstructed from the data.\\
+Because the objects to be estimated are infinite-dimensional, estimating them directly from a finite sample typically leads to unstable, noisy, and hard-to-interpret results. For this reason, \citet{Aue2017} impose a standard finite-dimensional approximation on the intercept function $\delta(t)$ and on the integral operators $\alpha$ and $\beta$. In particular, they assume that all three objects can be approximated using a fixed number $M$ of orthonormal basis functions $\Phi_M = \{\varphi_1(t), \ldots, \varphi_M(t)\}$ defined on $[0,1]$. Under this assumption, $\delta(t)$ is represented as a finite linear combination of these basis functions, while the operators $\alpha$ and $\beta$ are represented through their kernel functions using the same basis:
+\begin{align}
+    \delta(t) &= \sum_{m=1}^M d_m \varphi_m(t), \\
+    \alpha(t,s) &= \sum_{m,m'=1}^M a_{m,m'} \varphi_m(t)\varphi_{m'}(s), \\
+    \beta(t,s) &= \sum_{m,m'=1}^M b_{m,m'} \varphi_m(t)\varphi_{m'}(s).
+\end{align}
+From this representation, it is easy to see that estimating the functional objects $\delta(t)$, $\alpha$ and $\beta$ simplifies to estimating $\{d_1,\ldots,d_M,a_{1,1},\ldots,a_{M,M},b_{1,1},\ldots,b_{M,M}\}$. To further simplify notation, \citet{Aue2017} define the following quantities:
+\begin{align}
+    \mathbf{d}=\begin{pmatrix}
+        d_1\\
+        \vdots\\
+        d_M
+    \end{pmatrix}; \quad
+    \mathbf{A}=\begin{pmatrix}
+        a_{1,1} & \ldots & a_{1,M}\\
+        \vdots & \ddots & \vdots\\
+        a_{M,1} & \ldots & a_{M,M}
+    \end{pmatrix}; \quad
+    \mathbf{B}=\begin{pmatrix}
+        b_{1,1} & \ldots & b_{1,M}\\
+        \vdots & \ddots & \vdots\\
+        b_{M,1} & \ldots & b_{M,M}
+    \end{pmatrix}
+\end{align}
+To estimate $d$, $A$ and $B$ it is also necessary to project $(y_i(t)^2)_{i\in[1,N]}$ and $(\sigma_i(t))_{i\in[1,N]}$ onto $\Phi_M$ and define the m-dimensional vectors $\mathbf{y}_i^{(2)}=\begin{pmatrix}
+    y_{i,1}^{(2)} & \ldots & y_{i,M}^{(2)}
+\end{pmatrix}^\top$ and $\mathbf{s}_i^{(2)}=\begin{pmatrix}
+    s_{i,1}^{(2)} & \ldots & s_{i,M}^{(2)}
+\end{pmatrix}\top$ where their elements are the result of the inner product with the elements of $\Phi_M$ $y_{i,m}^{(2)}=\langle y_i(t),\varphi_m(t)\rangle$
 \begin{align}
     s_i^{(2)}=\mathbf{d}+\mathbf{Ay_{i-1}^{(2)}}+\mathbf{Bs_{i-1}^{(2)}}
 \end{align}
@@ -221,4 +252,9 @@ In this thesis, I have presented the Functional GARCH model and
     \varepsilon_i(t) = e^{-\frac{t}{2}}W_i(e^t)
 \end{align}
 Let $\sum a_n$ be a series with non-negative terms and let $\lambda = \varlimsup a_n^{1/n}$. Then (i) if $\lambda<1$ the series $\sum a_n$ converges, (ii) if $\lambda>1$ the series $\sum a_n$ diverges.
+
+\begin{align}
+    (\Gamma_{i,1}x)(t)&=\int \gamma_{i-1}(t,s)x(s)ds \\
+    \lVert\Gamma_{i,1}\rVert_{\mathcal{N}}&\leq \lVert\gamma_{i-1}\rVert_2
+\end{align}
 \end{document}
