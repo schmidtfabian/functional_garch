@@ -71,7 +71,8 @@
             
     \end{center}
 \end{titlepage}
-
+\tableofcontents
+\newpage
 \section{Introduction}
 \label{sec:Introduction}
 \begin{itemize}
@@ -84,7 +85,7 @@
 \label{sec:FGARCH}
 \subsection{(Scalar) GARCH and Multivariate GARCH}
 Before I turn to the functional GARCH model, I will focus on the scalar version of the GARCH model, both in the univariate and multivariate cases.\\
-The GARCH model, a generalization of the previously published ARCH model by \citet{Engle1982}, was introduced by \citet{Bollerslev1986}. (G)ARCH models fundamentally differentiate themselves from typical time series models, such as ARMA or VAR models. Instead of modeling the relationship between the observed values themselves and their previously observed values, the relationship between the squared observed values and their previous squared values is modeled. This is due to the following characteristics of financial time series data. Return data itself displays almost no or small autocorrelations, squared or absolute return data, however, does display significant autocorrelations. Furthermore, large fluctuations appear to occur in clusters that are recurrent but not periodic \citep{mandelbrot1963variation,taylor2011asset}. (G)ARCH models are therefore a natural conclusion of these stylized facts.\\
+The GARCH model, a generalization of the previously published ARCH model by \citet{Engle1982}, was introduced by \citet{Bollerslev1986}. (G)ARCH models differ fundamentally from standard time series models such as ARMA or VAR models. Instead of modeling the conditional mean of returns, they model the conditional variance by relating squared returns to their own lagged values. This approach is motivated by key stylized facts of financial time series. While returns typically exhibit little to no autocorrelation, squared or absolute returns display strong and persistent autocorrelation. In addition, volatility tends to cluster over time, with large fluctuations occurring in a recurrent but non-periodic manner \citep{mandelbrot1963variation,taylor2011asset}. (G)ARCH models provide an appropriate framework for capturing these stylized facts.\\
 An univariate GARCH(p,q) model can be described by its first two moments:
 \begin{definition}[GARCH(p,q) Process]
     A process $(y_t)$ is called a GARCH(p,q) process if its first two conditional moments exist and satisfy:
@@ -96,12 +97,12 @@ An univariate GARCH(p,q) model can be described by its first two moments:
         \end{align}
     \end{enumerate}
 \end{definition}
-A helpful representation of the GARCH(p,q) process can be obtained by defining an error term $\nu_t=y_t^2-\sigma_t^2$ and replacing $\sigma^2$ with $y^2+\nu$
+A helpful representation of the GARCH(p,q) process can be obtained by defining an error term $\nu_t=y_t^2-\sigma_t^2$ and replacing $\sigma^2$ with $y^2-\nu$
 \begin{align}
 \label{ARMAstructure}
     y_t^2=\delta+\sum_{i=0}^r\overbrace{(\alpha_i+\beta_i)}^{\text{$\kappa_i$}}y_{t-i}^2+\nu_t-\sum_{j=1}^p\beta_j\nu_{t-j}=\delta+\sum_{i=0}^r\kappa_iy_{t-i}^2+\nu_t-\sum_{j=1}^p\beta_j\nu_{t-j}
 \end{align}
-where $r=\mathrm{max}(p,q)$ with $\alpha_i=0$ ($\beta_j=0$) if $i>q$ ($j>p$). From this representation, it can be seen that a GARCH(p,q) process follows an ARMA(r,p)-like structure for the squared values $y_t^2$. Note that $(\nu_t)$ is not i.i.d. and therefore cannot be used to examine the existence of a stationary solution of the GARCH(p,q) process.\\
+where $r=\mathrm{max}(p,q)$ with $\alpha_i=0$ ($\beta_j=0$) if $i>q$ ($j>p$). From this representation, it can be seen that a GARCH(p,q) process follows an ARMA(r,p)-like structure for the squared values $y_t^2$. This insight also leads to the GARCH model being referred to as a generalization of the ARCH model which follows an AR-structure for the volatility equation. It can be shown, similarly to the AR and ARMA models, that a GARCH(p,q) process is equivalent to an ARCH($\infty$) process \citep{francq2019garch}. Note that $(\nu_t)$ is not i.i.d. and therefore cannot be used to examine the existence of a stationary solution of the GARCH(p,q) process.\\
 A more restrictive yet often useful definition of a GARCH process is that of a strong GARCH(p,q) process. A strong univariate GARCH(p,q) process can be represented as follows:
 \begin{gather}
     y_t = \sigma_t\varepsilon_t \\
@@ -111,11 +112,11 @@ A more restrictive yet often useful definition of a GARCH process is that of a s
 where $(\varepsilon_t)$ is $\mathrm{i.i.d.}$ Additionally, it is often assumed that $E[\varepsilon_t|\varepsilon_j, j<t]=0$ and $\mathrm{Var}[\varepsilon_t]=1$.\\
 I will focus on the strong GARCH(1,1) process since an equivalent functional version of this process is also used in \citet{Aue2017} as well as \citet{RICE20201023}.
 The strong GARCH(1,1) process is the simplest specification of the strong GARCH(p,q) processes. Nevertheless, this specification is also one of the most widely used in practice.\\ % Add reference!!!
-Before listing the condition for a stationary solution to the strong GARCH(1,1) process to exist, note that the second equation of the strong GARCH(1,1) process can be rewritten as follows:
+Before listing the conditions for a stationary solution to the strong GARCH(1,1) process to exist, note that the second equation of the strong GARCH(1,1) process can be rewritten as follows:
 \begin{align}
-    \sigma_t^2 = \delta + a(\varepsilon_{t-1}) \sigma_{t-i}^2, \quad \text{where }a(\varepsilon_t)=\alpha\varepsilon_t^2+\beta
+    \sigma_t^2 = \delta + a(\varepsilon_{t-1}) \sigma_{t-1}^2, \quad \text{where }a(\varepsilon_t)=\alpha\varepsilon_t^2+\beta
 \end{align}
-From this representation, it can be seen that the volatility equation of the GARCH process follows an AR-structure with a random coefficient.\\
+From this representation, it can be seen that the volatility equation of the strong GARCH process can also be represented as an AR model with a random coefficient. This representation is useful to study the existence of a stationary and ergodic solution.\\
 It can be shown that there exists a strictly stationary, non-anticipative, ergodic solution to the strong GARCH(1,1) process if the following condition is satisfied:
 \begin{theorem}[Strict stationarity of the strong GARCH(1,1) process]
 \label{stationarityscalarGARCH(1,1)}
@@ -129,7 +130,7 @@ It can be shown that there exists a strictly stationary, non-anticipative, ergod
     \end{align}
     converges almost surely, and the process $(y_t)$ defined by $y_t=\sqrt{h_t}\varepsilon_t$ is the unique strictly stationary solution of model (2.7). This solution is non-anticipative and ergodic.
 \end{theorem}
-To prove \ref{stationarityscalarGARCH(1,1)}, note that Equation (\ref{Eq2StrongGARCH}) can be solved recursively to attain $h_t$. Showing that $h_t$ converges involves an application of the Cauchy Root Test. Uniqueness then follows by contradiction by assuming the existence of another solution and showing that it must coincide with the original solution. The complete proof can be found in the Appendix.\\ % Add a sentence on ergodicity and non-anticipativeness Maybe try using Cleveref here if there is time.
+To prove \ref{stationarityscalarGARCH(1,1)}, note that Equation (\ref{Eq2StrongGARCH}) can be solved recursively to attain $h_t$. Showing that $h_t$ converges involves an application of the Cauchy Root Test as well as the strong law of large numbers. Uniqueness then follows by contradiction, assuming the existence of another solution and showing that it must coincide with the original solution. Ergodicity follows from the fact that the volatility equation of the GARCH(1,1) model can be stated as a homogeneous Markov Chain that is irreducible, aperiodic, and positive recurrent. It can actually be shown that the GARCH(1,1) process is geometrically ergodic under mild assumptions. Ergodicity describes the  The complete proof can be found in the Appendix.\\ % Add a sentence on ergodicity and non-anticipativeness Maybe try using Cleveref here if there is time.
 %The more general proof for strong GARCH(p,q) processes follows a similar structure
 Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha$, and $\beta$ have to be estimated. GARCH models are typically estimated using quasi-maximum likelihood estimation. Quasi-maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to...% add here reference to efficiency gains (reference is in Cerovecki) and fourth moments (reference in Franq)
 \subsection{Model}
@@ -155,7 +156,14 @@ From Definition \ref{fGARCH(p,q)}, it is easily seen that the Functional GARCH(p
         \sigma_i^2(t) = \delta(t)+\alpha y_{i-j}^2(t)+\beta\sigma_{i-k}^2(t)
 \end{gather}
 In the following, conditions for the existence of a stationary solution to the Functional GARCH(1,1) model are discussed. \citet{Aue2017} derive the conditions both for the space $L^2[0,1]$ as well as the space of continuous functions $C[0,1]$. I will first focus on solutions in $L^2[0,1]$.\\
-To emphasize the condition necessary for the existence of a stationary solution, \citeauthor{Aue2017} rewrite
+To use similar notation to the scalar case, rewrite the volatility equation into:
+\begin{gather}
+    \sigma_i^2(t) = \delta(t) + a(\varepsilon_{i-1}(t)) \sigma_{i-1}^2(t), \quad \text{where }a(\varepsilon_i(t))(t,s)=\alpha\varepsilon_t^2(t)+\beta
+\end{gather}
+The necessary condition for a stationary solution is then:
+\begin{theorem}[Strict stationarity of the functional GARCH(1,1) process]
+    Assuming 
+\end{theorem}
 \subsection{Estimation}
 \begin{itemize}
     \item Projection onto finite dimensional basis
@@ -245,7 +253,8 @@ In this thesis, I have presented the Functional GARCH model and
 \bibliography{bibliography}
 }
 
-\section*{Appendix}
+\appendix
+\section{Appendix}
 \label{sec:Appendix}
 \renewcommand{\thesubsection}{\Alph{subsection}}
 \begin{align}
