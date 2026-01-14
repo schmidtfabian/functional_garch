@@ -8,6 +8,7 @@
     urlcolor=blue
     }
 \usepackage{enumitem}
+\usepackage{dsfont}
 \usepackage{xcolor}
 \usepackage{tikz}
 \usepackage{multirow,booktabs}
@@ -33,6 +34,7 @@
 \newtheorem{definition}{Definition}[section]
 
 \newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[section]
 \renewcommand{\baselinestretch}{1.5} 
 
 \title{Master Thesis Topic}
@@ -72,7 +74,9 @@
     \end{center}
 \end{titlepage}
 \tableofcontents
+\thispagestyle{empty}
 \newpage
+\setcounter{page}{1}
 \section{Introduction}
 \label{sec:Introduction}
 \begin{itemize}
@@ -114,25 +118,25 @@ I will focus on the strong GARCH(1,1) process since an equivalent functional ver
 The strong GARCH(1,1) process is the simplest specification of the strong GARCH(p,q) processes. Nevertheless, this specification is also one of the most widely used in practice.\\ % Add reference!!!
 Before listing the conditions for a stationary solution to the strong GARCH(1,1) process to exist, note that the second equation of the strong GARCH(1,1) process can be rewritten as follows:
 \begin{align}
-    \sigma_t^2 = \delta + a(\varepsilon_{t-1}) \sigma_{t-1}^2, \quad \text{where }a(\varepsilon_t)=\alpha\varepsilon_t^2+\beta
+    \sigma_t^2 = \delta + \gamma_{t-1} \sigma_{t-1}^2, \quad \text{where }\gamma_t=\alpha\varepsilon_t^2+\beta
 \end{align}
 From this representation, it can be seen that the volatility equation of the strong GARCH process can also be represented as an AR model with a random coefficient. This representation is useful to study the existence of a stationary and ergodic solution.\\
 It can be shown that there exists a strictly stationary, non-anticipative, ergodic solution to the strong GARCH(1,1) process if the following condition is satisfied:
 \begin{theorem}[Strict stationarity of the strong GARCH(1,1) process]
 \label{stationarityscalarGARCH(1,1)}
     If
-    \begin{align}
-        -\infty\leq \gamma &:=\mathrm{E}\,\ \mathrm{log}\{\overbrace{\alpha\varepsilon_t^2+\beta}^{a(\varepsilon_t)}\}<0,
-    \end{align}
+    \begin{gather}
+        -\infty\leq\mathbb{E}\,\ \mathrm{log}\{\overbrace{\alpha\varepsilon_t^2+\beta}^{\gamma_t}\}<0,
+    \end{gather}
     then the infinite sum
-    \begin{align}
-        h_t &= \left[ 1+\sum_{i=0}^{\infty}a(\varepsilon_{t-1})...a(\varepsilon_{t-i}) \right]\delta; \quad a(z)=\alpha z^2+\beta
-    \end{align}
+    \begin{gather}
+        h_t = \delta+\sum_{i=1}^{\infty}\Gamma_{t,i}\delta, \quad \text{where }\Gamma_{t,i}=\gamma_{t-1}...\gamma_{t-i}
+    \end{gather}
     converges almost surely, and the process $(y_t)$ defined by $y_t=\sqrt{h_t}\varepsilon_t$ is the unique strictly stationary solution of model (2.7). This solution is non-anticipative and ergodic.
 \end{theorem}
 To prove \ref{stationarityscalarGARCH(1,1)}, note that Equation (\ref{Eq2StrongGARCH}) can be solved recursively to attain $h_t$. Showing that $h_t$ converges involves an application of the Cauchy Root Test as well as the strong law of large numbers. Uniqueness then follows by contradiction, assuming the existence of another solution and showing that it must coincide with the original solution. Ergodicity follows from the fact that the volatility equation of the GARCH(1,1) model can be stated as a homogeneous Markov Chain that is irreducible, aperiodic, and positive recurrent. It can actually be shown that the GARCH(1,1) process is geometrically ergodic under mild assumptions. Ergodicity describes the  The complete proof can be found in the Appendix.\\ % Add a sentence on ergodicity and non-anticipativeness Maybe try using Cleveref here if there is time.
 %The more general proof for strong GARCH(p,q) processes follows a similar structure
-Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha$, and $\beta$ have to be estimated. GARCH models are typically estimated using quasi-maximum likelihood estimation. Quasi-maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to...% add here reference to efficiency gains (reference is in Cerovecki) and fourth moments (reference in Franq)
+Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha$, and $\beta$ have to be estimated. GARCH models are typically estimated using quasi-maximum likelihood estimation. Quasi-maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to efficiency considerations. It can be shown that % add here reference to efficiency gains (reference is in Cerovecki) and fourth moments (reference in Franq)
 \subsection{Model}
 \begin{itemize}
     \item Stationarity
@@ -148,22 +152,88 @@ A sequence of random functions $(y_i(t))$ is called a functional GARCH process i
         \sigma_i^2(t) = \delta(t)+\sum_{j=1}^p\alpha_jy_{i-j}^2(t)+\sum_{k=1}^q\beta_k\sigma_{i-k}^2(t)
     \end{gather}
 \end{definition}
-Here, $\delta(t)$ is a non-negative function and $(\alpha_j)_{j\in (1,...,p)}$ and $(\beta_k)_{k \in (1,...,q)}$ are both integral operators $\alpha_jx(t)=\int \alpha_j(t,s)x(s)ds$ ($\beta_jx(t)=\int \beta_j(t,s)x(s)ds$) that map non-negative functions to non-negative functions. $x$ here denotes an arbitrary element in $L^2[0,1]$. By convention, I restrict the intraday time variable to $t\in[0,1]$. This is without loss of generality, since data that does not follow this convention can easily be converted into this format. $\int_0^1$ is therefore shortened to $\int$. The second time variable $i$ denotes the trading day. $(\varepsilon_i(t))_{i\in\mathbb{Z}}$ are i.i.d. functions.\\
-From Definition \ref{fGARCH(p,q)}, it is easily seen that the Functional GARCH(p,q) process follows a similar functional structure to the strong (scalar) GARCH process. As a consequence, Definition \ref{fGARCH(p,q)} can also be rewritten into a similar ARMA-like structure like the scalar version in Equation (\ref{ARMAstructure}).\\
-\citet{Aue2017}, as well as \citet{RICE20201023}, focus on the Functional GARCH(1,1) model that reduces the equations of the Functional GARCH(p,q) model to:
+Here, $\delta(t)$ is a non-negative function, and $(\alpha_j)_{j\in (1,...,p)}$ and $(\beta_k)_{k \in (1,...,q)}$ are both integral operators $\alpha_jx(t)=\int \alpha_j(t,s)x(s)ds$ ($\beta_jx(t)=\int \beta_j(t,s)x(s)ds$) that map non-negative functions to non-negative functions. $x$ here denotes an arbitrary element in $L^2[0,1]$. By convention, I restrict the intraday time variable to $t\in[0,1]$. This is without loss of generality since data that do not follow this convention can easily be converted into this format. $\int_0^1$ is therefore shortened to $\int$. The second time variable $i$ denotes the trading day. $(\varepsilon_i(t))_{i\in\mathbb{Z}}$ are i.i.d. functions.\\
+From Definition \ref{fGARCH(p,q)}, it is easily seen that the Functional GARCH(p,q) process follows a similar functional structure to the strong (scalar) GARCH process. As a consequence, Definition \ref{fGARCH(p,q)} can also be rewritten into a similar ARMA-like structure as in the scalar version in Equation (\ref{ARMAstructure}).\\
+To stick closely to the paper from \citet{Aue2017}, as well as \citet{RICE20201023}, I will focus on the Functional GARCH(1,1) model. That reduces the equations of the Functional GARCH(p,q) model to:
 \begin{gather}
-        y_i(t) = \sigma_i(t)\varepsilon_i(t)\\
-        \sigma_i^2(t) = \delta(t)+\alpha y_{i-j}^2(t)+\beta\sigma_{i-k}^2(t)
+    \label{FunctionalGARCH(1,1)}
+    y_i(t) = \sigma_i(t)\varepsilon_i(t)\\
+    \label{FunctionalGARCH(1,1)volatility}
+    \sigma_i^2(t) = \delta(t)+\alpha y_{i-j}^2(t)+\beta\sigma_{i-k}^2(t)
 \end{gather}
-In the following, conditions for the existence of a stationary solution to the Functional GARCH(1,1) model are discussed. \citet{Aue2017} derive the conditions both for the space $L^2[0,1]$ as well as the space of continuous functions $C[0,1]$. I will first focus on solutions in $L^2[0,1]$.\\
+In the following, conditions for the existence of a stationary solution to the Functional GARCH(1,1) model are discussed. \citet{Aue2017} derive the conditions both for the space $L^2[0,1]$ as well as for the space of continuous functions $C[0,1]$. I will first focus on solutions in $L^2[0,1]$.\\
 To use similar notation to the scalar case, rewrite the volatility equation into:
 \begin{gather}
-    \sigma_i^2(t) = \delta(t) + a(\varepsilon_{i-1}(t)) \sigma_{i-1}^2(t), \quad \text{where }a(\varepsilon_i(t))(t,s)=\alpha\varepsilon_t^2(t)+\beta
+\label{FGARCH(1,1)volatilityalternative}
+    \sigma_i^2(t) = \delta(t) + \gamma_{i-1} \sigma_{i-1}^2(t), \quad \text{where }\gamma_i(t,s)=\alpha\varepsilon_i^2(t)+\beta
 \end{gather}
-The necessary condition for a stationary solution is then:
+The necessary condition for a stationary solution then is:
 \begin{theorem}[Strict stationarity of the functional GARCH(1,1) process]
-    Assuming 
+\label{StationarityFGARCH(1,1)}
+    Let $\delta(t)\in L^2[0,1]$ be a non-negative function and $\alpha\in L^2[0,1]^2$ and $\beta \in L^2[0,1]^2$ be integral operators that map non-negative functions to non-negative functions. Let $\{\varepsilon_i(t):i\in \mathbb{Z}\}$ be i.i.d. random functions and $\varepsilon_0\in L^{4}[0,1]$ almost surely.
+    \begin{enumerate}[label=(\roman*)]
+        \item If
+            \begin{gather}
+                \infty\leq \mathbb{E}[\mathrm{log\left\| \gamma_0 \right\|_\mathcal{S}}]<0
+            \end{gather}
+            then the infinite sum
+            \begin{gather}
+            \label{FGARCH(1,1)StationarySolution}
+                h_i(t)=\delta(t)+\sum_{k=1}^\infty \Gamma_{i,k}\delta(t)
+            \end{gather}
+            converges almost surely, and the process $(y_i(t))$ defined by $y_i(t)=\sqrt{h_i(t)}\varepsilon_i(t)$ is the unique strictly stationary solution of the Functional GARCH(1,1) model in (\ref{FunctionalGARCH(1,1)}) and (\ref{FunctionalGARCH(1,1)volatility}). This solution is non-anticipative and ergodic.
+        \item If there is $\nu>0$ such that 
+        \begin{gather}
+        \label{FGARCH(1,1)StationarityMomentsCondition}
+            \mathbb{E}[\left\| \gamma_0 \right\|_\mathcal{S}^\nu ]<1
+        \end{gather}
+        then there exists a unique, strictly stationary, and nonanticipative solution in $L^2[0,1]$ to the Functional GARCH(1,1) model and $\mathbb{E}[\left\| \sigma_0^2 \right\|_2^\nu]<\infty$.
+    \end{enumerate}
 \end{theorem}
+Here $\left\|\right\|_\mathcal{S}$ is the Hilbert-Schmidt norm defined as
+\begin{gather}
+    \left\| \gamma_0 \right\|_\mathcal{S} = \left( \int\int \gamma^2_0(t,s)dt ds \right)^{\frac{1}{2}}
+\end{gather}
+and $\Gamma_{i,k}$ is the following random integral operator
+\begin{gather}
+    (\Gamma_{i,k}x)(t)=\int ...\int \gamma_{i-1}(t,s_1)\gamma_{i-2}(s_1,s_2)...\gamma_{i-k}(s_{k-1},s_k)ds_k...ds_2ds_1.
+\end{gather}
+Due to the close resemblance between this theorem and \ref{stationarityscalarGARCH(1,1)}, the proof of \ref{StationarityFGARCH(1,1)} follows analogous arguments. First, $h_i(t)$ is obtained by recursively solving (\ref{FGARCH(1,1)volatilityalternative}). Second, the convergence of $h_i(t)$ is established by applying the Cauchy--Schwarz inequality in conjunction with the strong law of large numbers. Finally, the uniqueness of the solution is shown by exploiting the recursive structure of (\ref{FGARCH(1,1)volatilityalternative}). Assuming the existence of an alternative solution implies that both solutions converge to the same limit, which in turn forces them to coincide, thereby yielding a contradiction.\\
+%My previous version:
+%Due to the strong similarity of this theorem to \ref{stationarityscalarGARCH(1,1)}, proving \ref{StationarityFGARCH(1,1)} follows a similar idea. Firstly, $h_i(t)$ is derived by recursively solving (\ref{FGARCH(1,1)volatilityalternative}). Secondly, to prove the convergence of $h_i(t)$ an application of the Cauchy-Schwarz inequality as well as the strong law of large numbers is needed. Lastly, to prove the uniqueness of the solution, the recursive structure of (\ref{FGARCH(1,1)volatilityalternative}) is used. Assuming that another solution exists results in the two solutions converging to the same limit and therefore both solutions coincide resulting in a contradiction.
+To prove the ergodicity of the above solution, the following corollary is useful.
+\begin{corollary}
+    \begin{enumerate}[label=(\roman*)]
+        \item
+        \label{FirstPointCorollary}
+        There is a functional $g$ such that
+        \begin{gather}
+            \sigma_i^2(t)=g(\varepsilon_i(t),\varepsilon_{i-1}(t),...).
+        \end{gather}
+        As a consequence, $(\sigma_i^2(t);i\in\mathbb{Z})$ and $(y_i(t);i\in \mathbb{Z})$ are Bernoulli shifts. This follows directly from (\ref{FGARCH(1,1)StationarySolution}).
+        \item
+        \label{SecondPointCorollary}
+        \ref{FirstPointCorollary} implies that both $(\sigma_i^2(t); i\in \mathbb{Z)}$ and $(y_i(t);i\in\mathbb{Z})$ are ergodic.
+    \end{enumerate}
+\end{corollary}
+(Weak) ergodicity of Bernoulli shifts is a well established result. (Weak) ergodicity is proven by...\\
+Unlike in the scalar version of the GARCH model proving geometric ergodicity and $\beta$-mixing is very difficult. That is because the concept of Since (weak) ergodicity is not sufficient for the application of the functional central limit theorem, \citet{Aue2017} derive the following result
+\begin{corollary}
+    \begin{enumerate}[label=(\Roman*)]
+        \item
+        \label{FGARCH(1,1)CLTCondition}
+        For $\ell\in \mathbb{N}$ and $j,i\in\mathbb{Z}$, let $\varepsilon_{i,j}^{(\ell)}(t)$ be independent copies of $\varepsilon_0(t)$ and define
+        \begin{gather}
+            \sigma_{i,\ell}^2(t) = g\left(\varepsilon_i(t),...,\varepsilon_{i-\ell}(t),\varepsilon_{i-\ell-1,i-\ell}^{(i)}(t),\varepsilon_{i-\ell-2,i-\ell}^{(i)}(t),... \right).
+        \end{gather}
+        If (\ref{FGARCH(1,1)StationarityMomentsCondition}) is satisfied, then there exists a constant $0<\rho<1$ such that
+        \begin{gather}
+            \mathbb{E}\left[\left\|\sigma_i^2(t)-\sigma_{i,\ell}(t) \right\|_2^\nu\right]=\mathcal{O}(\rho^\ell).
+        \end{gather}
+        \item From \ref{FGARCH(1,1)CLTCondition}, it follows that $(\sigma_i^2(t);i\in\mathbb{Z})$ and $(y_i(t);i\in \mathbb{Z})$ are weakly dependent processes.
+    \end{enumerate}
+\end{corollary}
+\ref{FGARCH(1,1)CLTCondition} is known as geometric $L^2$-m-approximibility. $L^p$-m-approximibility was first introduced by \citet{Lpmapproxibility}.
 \subsection{Estimation}
 \begin{itemize}
     \item Projection onto finite dimensional basis
