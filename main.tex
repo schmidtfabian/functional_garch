@@ -136,7 +136,7 @@ It can be shown that there exists a strictly stationary, non-anticipative, ergod
     converges almost surely, and the process $(y_t)$ defined by $y_t=\sqrt{h_t}\varepsilon_t$ is the unique strictly stationary solution of model (2.7). This solution is non-anticipative and ergodic.
 \end{theorem}
 To prove \ref{stationarityscalarGARCH(1,1)}, note that Equation (\ref{Eq2StrongGARCH}) can be solved recursively to attain $h_t$. Showing that $h_t$ converges involves an application of the Cauchy Root Test as well as the strong law of large numbers. Uniqueness then follows by contradiction, assuming the existence of another solution and showing that it must coincide with the original solution.\\
-Ergodicity describes the property of a stochastic process that time averages along a single, sufficiently long realization converge to the same values as ensemble averages taken over many realizations. A sufficient and particularly strong way to guarantee ergodicity is geometric ergodicity, which requires not only convergence to a unique stationary distribution but also convergence at an exponential rate. It can be shown that $(\sigma_t;t\in \mathbb{Z})$ of the GARCH(1,1) process is geometrically ergodic under mild assumptions, and therefore ergodic, meaning that initial conditions are forgotten exponentially fast and sample averages converge to their population counterparts, and $(y_t;t\in\mathbb{Z})$ is geometrically $\beta$-mixing which implies ergodicity. To prove that the GARCH(1,1) process is geometrically ergodic first note that the volatility equation of the GARCH process can be rewritten into a Markov Chain representation. One can then make use of a Theorem from \citet{FeignTweedie1985}. They show that a Markov Chain that is also an aperiodic, irreducible Feller Chain is geometrically ergodic if it satisfies an energy condition. Proving that $(y_t;t\in\mathbb{Z})$ is geometrically $\beta$-mixing follows from the geometric ergodicity of $(\sigma_t;t\in\mathbb{Z})$ and the fact that $(\varepsilon_t;t\in\mathbb{Z})$ is i.i.d. $(y_t;t\in\mathbb{Z})$ is not geometrically ergodic since it is not Markovian. The complete proof can be found in the Appendix.\\ % Add a sentence on ergodicity and non-anticipativeness Maybe try using Cleveref here if there is time.
+Ergodicity describes the property of a stochastic process that time averages along a single, sufficiently long realization converge to the same values as ensemble averages taken over many realizations. A sufficient and particularly strong way to guarantee ergodicity is geometric ergodicity, which requires not only convergence to a unique stationary distribution but also convergence at an exponential rate. It can be shown that $(\sigma_t;t\in \mathbb{Z})$ is geometrically ergodic under mild assumptions meaning that initial conditions are forgotten exponentially fast and sample averages converge to their population counterparts. $(y_t;t\in\mathbb{Z})$ is geometrically $\beta$-mixing which implies (weak) ergodicity. To prove that the GARCH(1,1) process is geometrically ergodic first note that the volatility equation of the GARCH process can be rewritten into a Markov Chain representation. One can then make use of a Theorem from \citet{FeignTweedie1985}. They show that a Markov Chain that is also an aperiodic, irreducible Feller Chain is geometrically ergodic if it satisfies an energy condition. Proving that $(y_t;t\in\mathbb{Z})$ is geometrically $\beta$-mixing follows from the geometric ergodicity of $(\sigma_t;t\in\mathbb{Z})$ and the fact that $(\varepsilon_t;t\in\mathbb{Z})$ is i.i.d. $(y_t;t\in\mathbb{Z})$ is not geometrically ergodic since it is not Markovian. The complete proof can be found in the Appendix.\\ % Add a sentence on ergodicity and non-anticipativeness Maybe try using Cleveref here if there is time.
 %The more general proof for strong GARCH(p,q) processes follows a similar structure
 Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha$, and $\beta$ have to be estimated. GARCH models are typically estimated using (quasi-)maximum likelihood estimation. (Quasi-)maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to efficiency considerations. It can be shown that\\ % add here reference to efficiency gains (reference is in Cerovecki) and fourth moments (reference in Franq)
 The likelihood equations for the GARCH(1,1) process are as follows
@@ -155,13 +155,16 @@ Taking the logarithm, the likelihood optimization problem can be simplified to m
 From here, parameters can be found by using an optimization algorithm, e.g. the Newton-Raphson method.\\
 It can be shown that the quasi-maximum likelihood estimator is consistent and asymptotically normal with the asymptotic variance of the estimator being equal to the inverse of the Fisher Information matrix when $(\varepsilon_t; t\in\mathbb{Z})$ is Gaussian and the inverse of the adjusted Fisher Information matrix when it is not. The details of the proof are omitted here for the sake of conciseness.\\
 Next, I will give a short exposition of multivariate GARCH processes since, in practice, they are very closely related to Functional GARCH processes. Defining a multivariate GARCH process is not as straightforward as for the univariate case. This is the case since adding more processes to the multivariate GARCH process does not only require estimating another conditional variance equation, but also the conditional covariances between the processes. This quickly leads to estimation becoming statistically infeasible if estimation stays unconstrained. Therefore, the conditional covariance matrix $H_t$ follows an explicit specification. In the following, I will present two of these specifications since they are closely connected to the Functional GARCH model.\\
-First, I will focus on the Principal Components GARCH model. The Principal Components GARCH model is defined like the following
+First, I will focus on the Principal Components GARCH model. The Principal Components GARCH model is defined as follows:
 \begin{gather}
     y_t = H_t^{\frac{1}{2}}\varepsilon_t\\
-    H_t=P\Lambda_tP^{\top}\\
-    \lambda_{i,t}=\delta_i
+    H_t=P\Lambda_tP^{\top}
 \end{gather}
-where $P$
+Here, $P$ is a $m\times m$ orthogonal matrix while $\Lambda_t$ is a $m\times m$ diagonal matrix with the diagonal elements being denoted by $\text{diag}(\lambda_{1,t},\lambda_{2,t},...\lambda_{m,t})$. The orthogonal matrix is typically estimated by Principal Component Analysis while the elements of $\Lambda_t$ are assumed to follow an univariate GARCH(1,1) model.
+\begin{gather}
+    \lambda_{i,t}=\delta_i+\alpha_i y_{i,t-1}^{(2)}+\beta_i
+\end{gather}
+
 \subsection{Model}
 \begin{itemize}
     \item Stationarity
@@ -223,7 +226,7 @@ and $\Gamma_{i,k}$ is the following random integral operator
 \begin{gather}
     (\Gamma_{i,k}x)(t)=\int ...\int \gamma_{i-1}(t,s_1)\gamma_{i-2}(s_1,s_2)...\gamma_{i-k}(s_{k-1},s_k)ds_k...ds_2ds_1.
 \end{gather}
-Due to the close resemblance between this theorem and \ref{stationarityscalarGARCH(1,1)}, the proof of \ref{StationarityFGARCH(1,1)} follows analogous arguments. First, $h_i(t)$ is obtained by recursively solving (\ref{FGARCH(1,1)volatilityalternative}). Second, the convergence of $h_i(t)$ is established by applying the Cauchy--Schwarz inequality in conjunction with the strong law of large numbers. Finally, the uniqueness of the solution is shown by exploiting the recursive structure of (\ref{FGARCH(1,1)volatilityalternative}). Assuming the existence of an alternative solution implies that both solutions converge to the same limit, which in turn forces them to coincide, thereby yielding a contradiction.\\
+Due to the close resemblance between this theorem and \ref{stationarityscalarGARCH(1,1)}, the proof of \ref{StationarityFGARCH(1,1)} follows analogous arguments. First, $h_i(t)$ is obtained by recursively solving (\ref{FGARCH(1,1)volatilityalternative}). Second, the convergence of $h_i(t)$ is established by applying the Cauchy--Schwarz inequality in conjunction with the strong law of large numbers. Finally, the uniqueness of the solution is shown by exploiting the recursive structure of (\ref{FGARCH(1,1)volatilityalternative}). Assuming the existence of an alternative solution implies that both solutions converge to the same limit, which in turn forces them to coincide, thereby yielding a contradiction. The full proof of \ref{StationarityFGARCH(1,1)} can be found in the Appendix.\\
 %My previous version:
 %Due to the strong similarity of this theorem to \ref{stationarityscalarGARCH(1,1)}, proving \ref{StationarityFGARCH(1,1)} follows a similar idea. Firstly, $h_i(t)$ is derived by recursively solving (\ref{FGARCH(1,1)volatilityalternative}). Secondly, to prove the convergence of $h_i(t)$ an application of the Cauchy-Schwarz inequality as well as the strong law of large numbers is needed. Lastly, to prove the uniqueness of the solution, the recursive structure of (\ref{FGARCH(1,1)volatilityalternative}) is used. Assuming that another solution exists results in the two solutions converging to the same limit and therefore both solutions coincide resulting in a contradiction.
 To prove the ergodicity of the above solution, the following corollary is useful.
@@ -242,7 +245,7 @@ To prove the ergodicity of the above solution, the following corollary is useful
     \end{enumerate}
 \end{corollary}
 (Weak) ergodicity of Bernoulli shifts is a well established result. (Weak) ergodicity is proven by...\\
-Unlike in the scalar version of the GARCH model proving geometric ergodicity and $\beta$-mixing is very difficult. That is because the concept of Since (weak) ergodicity is not sufficient for the application of the functional central limit theorem, \citet{Aue2017} derive the following result
+Unlike in the scalar version of the GARCH model proving geometric ergodicity and $\beta$-mixing for the Functional GARCH model is very difficult. That is because the concept of Since (weak) ergodicity is not sufficient for the application of the functional central limit theorem, \citet{Aue2017} derive the following result.
 \begin{corollary}
     \begin{enumerate}[label=(\Roman*)]
         \item
@@ -258,7 +261,7 @@ Unlike in the scalar version of the GARCH model proving geometric ergodicity and
         \item From \ref{FGARCH(1,1)CLTCondition}, it follows that $(\sigma_i^2(t);i\in\mathbb{Z})$ and $(y_i(t);i\in \mathbb{Z})$ are weakly dependent processes.
     \end{enumerate}
 \end{corollary}
-\ref{FGARCH(1,1)CLTCondition} is known as geometric $L^2$-m-approximibility. $L^p$-m-approximibility was first introduced by \citet{Lpmapproxibility}.
+\ref{FGARCH(1,1)CLTCondition} is known as geometric $L^2$-m-approximibility. $L^p$-m-approximability for functional data was first introduced by \citet{Lpmapproxibility}. A process that is geometrically $L^p$-m-approximable can be approximated by an m-dependent process at a geometric rate. A stochastic process $(X_n)$ is called m-dependent if observations that are more than $m$ time steps apart are independent. More precisely, for any time index $k$, the collection of random variables $\left\{X_n:n\leq k \right\}$ is independent of the collection $\left\{X_n:n\geq k+m \right\}$. In other words, the past up to time $k$ has no influence on the future starting from time $k+m$. Formally, $X_n$ is m-dependent if, for any integer $k$, the $\sigma$-algebra $\mathcal{F}_k^-=\sigma\left\{...,X_{k-2},X_{k-1,X_k} \right\}$ generated by the past observations is independent of the $\sigma$-algebra generated by the future observations $\mathcal{F}_{k+m}^+=\sigma\left\{ X_{k+m},X_{k+m+1},X_{k+m+2},... \right\}$. \citet{Lpmapproxibility} use the concept of $L^p$-m-approximability to
 \subsection{Estimation}
 \begin{itemize}
     \item Projection onto finite dimensional basis
@@ -271,8 +274,10 @@ Unlike in the scalar version of the GARCH model proving geometric ergodicity and
 In the following section, I address the estimation of a functional GARCH(1,1) model. I consider a setting in which a finite sample of $N$ functional observations $\{y_i(t)\}_{i=1}^N$ is available. Although functional data are commonly recorded on a dense discrete grid in practical applications, I assume here that the underlying functional forms are directly observed or can be reliably reconstructed from the data.\\
 Because the objects to be estimated are infinite-dimensional, estimating them directly from a finite sample typically leads to unstable, noisy, and hard-to-interpret results. For this reason, \citet{Aue2017} impose a standard finite-dimensional approximation on the intercept function $\delta(t)$ and on the integral operators $\alpha$ and $\beta$. In particular, they assume that all three objects can be approximated using a fixed number $M$ of orthonormal basis functions $\Phi_M = \{\varphi_1(t), \ldots, \varphi_M(t)\}$ defined on $[0,1]$. Under this assumption, $\delta(t)$ is represented as a finite linear combination of these basis functions, while the operators $\alpha$ and $\beta$ are represented through their kernel functions using the same basis:
 \begin{align}
+\label{basisdecompositiondelta}
     \delta(t) &= \sum_{m=1}^M d_m \varphi_m(t), \\
     \alpha(t,s) &= \sum_{m,m'=1}^M a_{m,m'} \varphi_m(t)\varphi_{m'}(s), \\
+    \label{basisdecompositionbeta}
     \beta(t,s) &= \sum_{m,m'=1}^M b_{m,m'} \varphi_m(t)\varphi_{m'}(s).
 \end{align}
 From this representation, it is easy to see that estimating the functional objects $\delta(t)$, $\alpha$ and $\beta$ simplifies to estimating $\{d_1,\ldots,d_M,a_{1,1},\ldots,a_{M,M},b_{1,1},\ldots,b_{M,M}\}$. To further simplify notation, \citet{Aue2017} define the following quantities:
@@ -299,6 +304,7 @@ To estimate $d$, $A$, and $B$, it is necessary to project $(y_i(t)^2)_{i\in[1,N]
     s_{i,1}^{(2)} & \ldots & s_{i,M}^{(2)}
 \end{pmatrix}^\top$ where their elements are the result of the inner product with the elements of $\Phi_M$ $y_{i,m}^{(2)}=\langle y_i(t),\varphi_m(t)\rangle$. This leads to the following equation that expresses the projected components of the volatility equation of the FGARCH(1,1) model in matrix form
 \begin{align}
+\label{FGARCH(1,1)MatrixForm}
     s_i^{(2)}=\mathbf{d}+\mathbf{Ay_{i-1}^{(2)}}+\mathbf{Bs_{i-1}^{(2)}}.
 \end{align}
 Next, note that this equation can be solved recursively to end up with an equation for $ s_i^{(2)}$ that only depends on $y_{i}^{(2)}$
@@ -321,10 +327,11 @@ The goal of any objective function, thus, has to be to find $\underline{\hat{\th
 \end{gather}
 This is without loss of generality since this condition can always be fulfilled by an appropriate way of scaling. Under this condition, $\mathbb{E}[s_i^{(2)}|\mathcal{F}_{i-1}]=y_i^{(2)}$ where $\mathcal{F}_{i-1}$ is the sigma-algebra generated by all $\varepsilon_\ell:\ell<i$, $\mathcal{F}_{i-1}=\sigma(\varepsilon_\ell:\ell<i)$. As a consequence, \citet{Aue2017} define the following least squares estimator
 \begin{align}
-    \underline{\hat{\theta}}_n=argmin\{S_n(\underline{\theta})=\sum_{i=2}^n\{y_i^{(2)}-\hat{s}_i^{(2)} \}^{\top}\{y_i^{(2)}-\hat{s}_i^{(2)} \}:\underline{\theta}\in\mathbf{\Theta}\}.
+\label{ObjectiveFunctionLSFGARCH}
+    \underline{\hat{\theta}}_n=argmin\{S_n(\underline{\theta})=\sum_{i=2}^n\{y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta}) \}^{\top}\{y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta}) \}:\underline{\theta}\in\mathbf{\Theta}\}.
 \end{align}
 In the following, I will discuss the strong consistency and asymptotic distribution of the least-squares estimator $ \underline{\hat{\theta}}_n$.\\
-To prove the strong consistency and asymptotic normality of the estimator the following Assumption is needed.
+To prove the strong consistency and asymptotic normality of the estimator, the following Assumption is needed.
 \begin{assumption}
 \label{Assumption1}
     It is assumed that
@@ -336,28 +343,78 @@ To prove the strong consistency and asymptotic normality of the estimator the fo
     \end{enumerate}
 \end{assumption}
 The first part of the assumption rules out trivial predictability of $y_1^{(2)}$ from its past. The second and third parts impose standard regularity conditions on the parameter space. \ref{Ainvertibility} also implies that $A$ is non-singular and thus invertible.\\
-Using this Assumption the strong consistency of $\underline{\hat{\theta}}_n$ is established in the following Theorem.
+Using this assumption, the strong consistency of $\underline{\hat{\theta}}_n$ is established in the following Theorem.
 \begin{theorem}
 \label{StrongConstistencyFGARCH(1,1)}
-    Assume that $(y_i(t);i\in\mathbb{Z})$ follows a Functional GARCH(1,1) process as defined in (\ref{FunctionalGARCH(1,1)}) and (\ref{FunctionalGARCH(1,1)volatility}), that $\delta(t)$ is a non-negative function, and $\alpha$ and $\beta$ are integral operators that map non-negative functions to non-negative functions, that (\ref{FGARCH(1,1)StationarityMomentsCondition}) holds with $\nu=1$, that $\mathbb{E}\left[\left\|\varepsilon_0\right\|_2^2\right]<\infty$, and that (\ref{UnitVarianceepsilonfunction}) holds. Then under Assumption \ref{Assumption1} $\underline{\hat{\theta}}_n$ is strongly consistent meaning that
+    Assume that $(y_i(t);i\in\mathbb{Z})$ follows a Functional GARCH(1,1) process as defined in (\ref{FunctionalGARCH(1,1)}) and (\ref{FunctionalGARCH(1,1)volatility}), that $\delta(t)$ is a non-negative function, and $\alpha$ and $\beta$ are integral operators that map non-negative functions to non-negative functions, that (\ref{FGARCH(1,1)StationarityMomentsCondition}) holds with $\nu=1$, that $\mathbb{E}\left[\left\|\varepsilon_0\right\|_2^2\right]<\infty$, and that (\ref{UnitVarianceepsilonfunction}) holds. Then under Assumption \ref{Assumption1} $\underline{\hat{\theta}}_n$ is strongly consistent, meaning that
     \begin{gather}
         \underline{\hat{\theta}}_n \rightarrow \theta
     \end{gather}
     as $n\rightarrow\infty$.
 \end{theorem}
-To examine the asymptotic distribution of $\underline{\hat{\theta}}_n$ the following quantities are useful
+To examine the asymptotic distribution of $\underline{\hat{\theta}}_n$, the following quantities are useful
 \begin{gather}
     \mathbf{H_0}=\mathbb{E}\left[\frac{\partial \tilde{s}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right], \quad \quad \mathbf{J_0}=\mathbb{E}\left[\left\{y_0^{(2)}-s_0^{(2)}\right\}\left\{y_0^{(2)}-s_0^{(2)}\right\}^\top\right],\\
-    \mathbf{Q_0}=\mathbb{E}\left[\left(\frac{\partial \tilde{s}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right)^\top\left(\frac{\partial \tilde{s}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right)\right]
+    \mathbf{Q_0}=\mathbb{E}\left[\left(\frac{\partial \tilde{s}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right)^\top\left(\frac{\partial \tilde{s}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right)\right].
 \end{gather}
+Under the conditions stated in Theorem \ref{StrongConstistencyFGARCH(1,1)}, the matrices $H_0$ and $Q_0$ are well defined. Moreover, if $\mathbb{E}[\left\|\sigma_0^2\right\|_2^4]<\infty$ and $\mathbb{E}[\left\|\varepsilon_0^2\right\|_2^4]<\infty$, the matrix $J_0$ exists. We additionally assume that $Q_0$ is non-singular. The matrix $Q_0$ can be interpreted as the second-moment matrix of the score derivative and, as shown in the Appendix, it is equal to the second derivative of the sample version of $J_0$, the objective function to be minimized. Non-singularity, therefore, guaranties invertibility and ensures that the objective function is locally well behaved.
 \begin{theorem}
-    Assume that the conditions of \ref{StrongConstistencyFGARCH(1,1)} are satisfied, \ref{} holds and $\mathbb{E}[\left\|y_0^2\right\|_2^4<\infty$. Then, as $n\rightarrow \infty$,
-    \begin{gather}
-        \sqrt{n}(\underline{\hat{\theta}}_n-\theta)\overset{\mathcal{D}}{\rightarrow}\mathbf{N},
-    \end{gather}
-    where $\mathbf{N}$ is a $2\mathbf{M^2}+\mathbf{M}$ dimensional normal vector with $\mathbb{E}\left[\mathbf{N}\right]=0$ and $\mathbb{E}\left[\mathbf{NN}^\top \right]=\mathbf{Q_0}^{-1}\mathbf{H_0}^\top\mathbf{J_0H_0Q_0}^{-1}$.
+\label{AsymptoticDistroFGARCH(1,1)estimator}
+Assume that the conditions of Theorem~\ref{StrongConstistencyFGARCH(1,1)} are satisfied, that $\mathbf{Q_0}$ is non-singular, and that $\mathbb{E}\!\left[\|y_0^2\|_2^4\right]<\infty$. Then, as $n\to\infty$,
+\begin{gather}
+\sqrt{n}\,(\underline{\hat{\theta}}_n-\theta)
+\;\overset{\mathcal{D}}{\longrightarrow}\;
+\mathcal{N}\!\left(0,\,
+\mathbf{Q_0}^{-1}\mathbf{H_0}^\top\mathbf{J_0H_0Q_0}^{-1}\right),
+\end{gather}
+where the limiting distribution is a $(2M^2+M)$-dimensional normal distribution.
 \end{theorem}
-The proof of \ref{} is centered on an application of the coordinate-wise mean value theorem for vectors.
+%The proof of \ref{AsymptoticDistroFGARCH(1,1)estimator} uses the (componentwise) mean value theorem. First, define $\hat{Z}_n(\underline{\theta})=\frac{1}{n}\sum_{i=2}^n\left\{ y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta})\right\}^\top \left\{ y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta})\right\}$ as the sample version of the least squares value with any $\underline{\theta}$. Denoting the gradient and Hessian by $\frac{\partial \hat{Z}_n(\underline{\theta})}{\partial\underline{\theta}}$ and $\frac{\partial^2 \hat{Z}_n(\underline{\theta})}{\partial\underline{\theta}^2}$, the mean value theorem gives $\frac{\partial \hat{Z}_n(\underline{\theta})}{\partial\underline{\theta}}-\frac{\partial \hat{Z}_n(\theta)}{\partial\underline{\theta}}=\frac{\partial^2 \hat{Z}_n(\check{\theta)}}{\partial\underline{\theta}^2}(\underline{\theta}_n-\theta)$ for some $\check{\theta}$ between $\theta$ and $\underline{\theta}$. Since $\frac{\partial \hat{Z}_n(\underline{\theta})}{\partial\underline{\theta}}=0$, the asymptotic distribution of the estimate $\underline{\theta_n}$ depends only on $\frac{\partial \hat{Z}_n(\theta)}{\partial\underline{\theta}}$ and $\frac{\partial^2 \hat{Z}_n(\check{\theta)}}{\partial\underline{\theta}^2}$. Applying the uniform law of large numbers to $\frac{\partial^2 \hat{Z}_n(\check{\theta)}}{\partial\underline{\theta}^2}$ and the CLT for orthogonal martingale differences to $\frac{\partial \hat{Z}_n(\theta)}{\partial\underline{\theta}}$ yields the asymptotic distribution in \ref{AsymptoticDistroFGARCH(1,1)estimator}. The full proof can be found in the Appendix.\\ My version
+
+The proof of Theorem~\ref{AsymptoticDistroFGARCH(1,1)estimator} relies on a componentwise application of the mean value theorem. Define
+\[
+\hat{Z}_n(\underline{\theta})
+=
+\frac{1}{n}\sum_{i=2}^n
+\left\{ y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta})\right\}^\top
+\left\{ y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta})\right\},
+\]
+the sample least squares criterion for a generic parameter vector $\underline{\theta}$.
+Denote its gradient and Hessian by
+$\frac{\partial \hat{Z}_n(\underline{\theta})}{\partial\underline{\theta}}$
+and
+$\frac{\partial^2 \hat{Z}_n(\underline{\theta})}{\partial\underline{\theta}^2}$,
+respectively.
+Applying the mean value theorem to the score function at the estimator
+$\underline{\hat{\theta}}_n$ yields
+\[
+\frac{\partial \hat{Z}_n(\underline{\hat{\theta}}_n)}{\partial\underline{\theta}}
+-
+\frac{\partial \hat{Z}_n(\theta)}{\partial\underline{\theta}}
+=
+\frac{\partial^2 \hat{Z}_n(\check{\theta})}{\partial\underline{\theta}^2}
+(\underline{\hat{\theta}}_n-\theta),
+\]
+for some intermediate value $\check{\theta}$ lying between $\theta$ and
+$\underline{\hat{\theta}}_n$.
+Since $\frac{\partial \hat{Z}_n(\underline{\theta})}{\partial\underline{\theta}}=0$, the first term vanishes, and thus
+\[
+\sqrt{n}(\underline{\hat{\theta}}_n-\theta)
+=
+-
+\left(\frac{\partial^2 \hat{Z}_n(\check{\theta})}{\partial\underline{\theta}^2}\right)^{-1}
+\sqrt{n}\,
+\frac{\partial \hat{Z}_n(\theta)}{\partial\underline{\theta}}.
+\]
+
+The asymptotic distribution of $\underline{\hat{\theta}}_n$ therefore depends on the limiting behavior of the score and the Hessian. A uniform law of large numbers yields convergence of the Hessian to $2\mathbf{Q_0}$, while a central limit theorem for orthogonal martingale differences applies to the score evaluated at $\theta$. Combining these results establishes the asymptotic normality stated in Theorem~\ref{AsymptoticDistroFGARCH(1,1)estimator}. The full proof is deferred to the Appendix.\\
+\citet{Cerovecki2019} derive an alternative estimate based on (pseudo) quasi-maximum likelihood. Applying maximum likelihood techniques to functional data is in general not straightforward since there is no probability function defined for curves. As a consequence, \citeauthor{Cerovecki2019} also assume that $\delta(t)$, $\alpha$, and $\beta$ can be decomposed into a finite combination of basis functions as in (\ref{basisdecompositiondelta}-\ref{basisdecompositionbeta}). They show that equation (\ref{FGARCH(1,1)MatrixForm}) reduces to a semi-strong multivariate CCC-GARCH model with $R=\mathbb{I}_M$, where $\mathbb{I}_M$ is the identity matrix with dimensions $M\times M$.\\
+They prove the consistency and asymptotic normality of the quasi-maximum likelihood estimator for this semi-strong multivariate CCC-GARCH model. Following this result, they prove the consistency and asymptotic normality of the (pseudo) quasi-maximum likelihood estimator of the Functional GARCH model. The estimator for the Functional GARCH model is then defined as follows.
+\begin{gather}
+    \underline{\hat{\theta}}_n= \arg \min_{\theta \in \Theta} \sum_{i=1}^n \tilde{\ell}_i(\theta), \quad \tilde{\ell}_i(\theta)=\sum_{m=1}^M\left\{\frac{\langle y_i^2,\varphi_m\rangle}{\langle \tilde{\sigma}_i^2,\varphi_m\rangle}+\log\langle \tilde{\sigma}_i^2,\varphi_m\rangle \right\},
+\end{gather}
+where the empirical volatility is calculated recursively from\\
+Finally, \citeauthor{Aue2017} discuss the estimation of basis functions. In general, any orthonormal basis can be used as basis functions. Popular choices include B-splines, Fourier bases, and wavelet functions. An alternative approach is to estimate Functional Principal Components from the data and use these as basis functions. 
 \subsection{Value-at-risk}
 \begin{itemize}
     \item Explanation of the concept of value-at-risk
@@ -396,13 +453,18 @@ In this thesis, I have presented the Functional GARCH model and
 \section{Appendix}
 \label{sec:Appendix}
 \renewcommand{\thesubsection}{\Alph{subsection}}
+\subsection{Proofs of Section 2.1}
 \begin{align}
     \varepsilon_i(t) = e^{-\frac{t}{2}}W_i(e^t)
 \end{align}
 Let $\sum a_n$ be a series with non-negative terms and let $\lambda = \varlimsup a_n^{1/n}$. Then (i) if $\lambda<1$ the series $\sum a_n$ converges, (ii) if $\lambda>1$ the series $\sum a_n$ diverges.
-
+\subsection{Proofs of Section 2.2}
 \begin{align}
     (\Gamma_{i,1}x)(t)&=\int \gamma_{i-1}(t,s)x(s)ds \\
     \lVert\Gamma_{i,1}\rVert_{\mathcal{N}}&\leq \lVert\gamma_{i-1}\rVert_2
 \end{align}
+\subsection{Proofs of Section 2.3}
+\begin{gather}
+    \tilde{Z}_n(\underline{\theta})=\frac{1}{n}\sum_{i=2}^n\left\{ y_i^{(2)}-\tilde{s}_i^{(2)}(\underline{\theta})\right\}^\top \left\{ y_i^{(2)}-\tilde{s}_i^{(2)}(\underline{\theta})\right\} \rightarrow \sum_{m=1}^M\mathbb{E}\left[\langle\sigma_0^2(\varepsilon_0^2-1),\varphi_m \rangle^2 \right]+M(\underline{\theta}) \quad \text{a.s.}
+\end{gather}
 \end{document}
