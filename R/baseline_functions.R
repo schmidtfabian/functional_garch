@@ -1,10 +1,10 @@
 # --------------------------------------------------
-# Function: fpca_compute()
+# Function: baseline_compute()
 #
 # Description:
-#   Computes functional principal components from squared curves.
+#   Computes truncated functional principal components from squared curves.
 #   Demeans the curves, constructs covariance matrix, 
-#   and returns eigenvectors, eigenvalues, and explained variance.
+#   and returns truncated eigenvectors, eigenvalues, and explained variance.
 #
 # Args:
 #   y_squared      : matrix (observations x grid points) of squared curves
@@ -16,7 +16,7 @@
 #     explained_variance    : vector of proportion of variance explained by each PC
 # --------------------------------------------------
 
-fpca_compute <- function(y_squared) {
+baseline_compute <- function(y_squared) {
   
   n_obs <- nrow(y_squared)
   T_grid <- ncol(y_squared)
@@ -39,12 +39,20 @@ fpca_compute <- function(y_squared) {
   cov_eigen <- eigen(cov_matrix)
   
   eigenvectors <- cov_eigen$vectors
+  eigenvectors <- eigenvectors / sqrt(dt)
   eigenvalues  <- cov_eigen$values
   
-  # --------------------------------------------------
-  # Rescale functional PCs to continuous L2 norm
-  # --------------------------------------------------
-  eigenvectors <- -eigenvectors / sqrt(dt)
+  # Change sign of eigenvectors if the first PC is all negative
+  if (mean(eigenvectors[,1])<0) {
+    eigenvectors <- -eigenvectors
+  }
+  
+  # Ensure positivity of each PC
+  for (k in 1:ncol(eigenvectors)) {
+    temp <- eigenvectors[,k]
+    temp[temp < 0] <- 0
+    eigenvectors[,k] <- temp
+  }
   
   # --------------------------------------------------
   # Explained variance for each PC

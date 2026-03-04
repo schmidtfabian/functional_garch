@@ -1,5 +1,5 @@
 # --------------------------------------------------
-# simulate_fgarch_1()
+# simulate_fgarch_2()
 #
 # Simulates functional GARCH process with OU innovations
 #
@@ -22,7 +22,7 @@
 #   - If seed = NULL, randomness is controlled externally (main.R)
 #   - If seed is provided, simulation is reproducible in isolation
 # --------------------------------------------------
-simulate_fgarch_1 <- function(
+simulate_fgarch_2 <- function(
     burn_in,
     train_size,
     eval_size,
@@ -47,8 +47,10 @@ simulate_fgarch_1 <- function(
   t_grid <- seq(0, 1, length.out = T_grid_points)
   t_difference <- 1 / (T_grid_points - 1)
   
-  delta_vector <- rep(0.01, T_grid_points)
-  alpha_function <- beta_function <- function(t, s) 12*t*(1-t)*s*(1-s)
+  delta_function <- function(t) (t - 0.5)^2 + 0.1
+  delta_vector <- delta_function(t_grid)
+  alpha_function <- function(s, t) (s - 0.5)^2+(t - 0.5)^2+0.2
+  beta_function <- function(s, t) (s - 0.5)^2+(t - 0.5)^2+0.4
   
   alpha_kernel_matrix <- outer(t_grid, t_grid, alpha_function)
   beta_kernel_matrix  <- outer(t_grid, t_grid, beta_function)
