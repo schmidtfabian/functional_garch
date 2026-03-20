@@ -12,6 +12,7 @@
 \usepackage{xcolor}
 \usepackage{tikz}
 \usepackage{multirow,booktabs}
+\usepackage{makecell}
 \usepackage{graphics,subfig}
 \usepackage{setspace}
 \usepackage{changepage}
@@ -20,6 +21,8 @@
 \usepackage{geometry}
 \usepackage{dcolumn}
 \usepackage{cleveref}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
 \newlength{\tabcont}
 \setlength{\parindent}{0.0in}
 \setlength{\parskip}{0.05in}
@@ -35,7 +38,22 @@
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{corollary}{Corollary}[section]
-\newtheorem{remark}{Remark}[section]
+\newtcbtheorem[number within=section]{remark}{Remark}{
+    breakable,
+    colback=gray!10,
+    colframe=black,
+    boxrule=0.8pt,
+    arc=2pt,
+    left=6pt,
+    right=6pt,
+    top=6pt,
+    bottom=6pt,
+    fonttitle=\bfseries
+}{rem}
+\tcbset{
+  enhanced,
+  breakable
+}
 \newtheorem{assumption}{Assumption}[section]
 \renewcommand{\baselinestretch}{1.5} 
 
@@ -87,17 +105,24 @@
 %    \item transition to Functional Data Analysis and then Functional GARCH and its applications (literature)
 %    \item explain structure and goal of the thesis
 %\end{itemize}
-The interest in quantitative financial risk measures has a long history, with the earliest ideas of quantitative risk measures dating back to the early $20^{th}$ century. The most notable early contribution was the dissertation by Louis Bachelier, which introduced Brownian motion to finance. Risk management, in general, dates back to the $17^{th}$ century, with merchants using rudimentary forms of protection against trade risks. The goal of risk management should always be to limit the risk of (high) losses and default while not establishing too high levels of security such that the business becomes unprofitable. One such measure that is the most popular for measuring market risk, the risk associated with losses on balance sheet and off-balance sheet items, is value-at-risk. The concept of value-at-risk was first mentioned in \citet{Leavens1945} before being introduced by \citet{Markowitz1952} and \citet{Roy1952} and became the preferred method for estimating market risk with the Basel II Accord in June 2004. Value-at-risk became so popular for estimating  One approach to estimate value-at-risk is to make use of so-called (general) auto-regressive conditional heteroskedasticity models.\\
-The GARCH model, a generalization of the previously published ARCH model by \citet{Engle1982}, was introduced by \citet{Bollerslev1986}. (G)ARCH models differ fundamentally from standard time series models such as ARMA or VAR models. Instead of modeling the conditional mean of returns, they model the conditional variance by relating squared returns to their own lagged values. This approach is motivated by key stylized facts of financial time series. While returns typically exhibit little to no autocorrelation, squared or absolute returns display strong and persistent autocorrelation. In addition, volatility tends to cluster over time, with large fluctuations occurring in a recurrent but non-periodic manner \citep{mandelbrot1963variation,taylor2011asset}. (G)ARCH models provide an appropriate framework for capturing these stylized facts. By explicitly modeling the variance of financial assets the GARCH model allows the user to get an understanding of the underlying process related to risk of a financial asset which allows the user to forecast value-at-risk.\\
-With the rise of high frequency data available both in finance and other fields, appropriate models, and theoretical frameworks are needed to make use of this data. Functional Data Analysis deals with data that manifests itself as curves. Since high frequency data in finance, e.g. return data, is highly correlated methods and theoretical frameworks from the field of Functional Data Analysis seem appropriate for this task. There exist various monographs for a comprehensive introduction into the subject. \citet{Ramsay2005} focuses on the practical application of Functional Data Analysis while \citet{hsing2015theoretical} deals with the theoretical foundations of Functional Data Analysis. \citet{kokoszka2017introduction} gives a good overview of both while also dedicating a few chapters to more specialized topics like Functional time series.\\
-\citet{hormann2013functional} make use of methods from the field of Functional time series to extend the ARCH model to the functional context. \citet{Aue2017} then do the same with the GARCH model. \citet{RICE20201023} then apply this model to forecasting intra-day value-at-risk return curves. The latter two papers is what this thesis is about.\\
-The aim of this thesis is to examine both the theoretical as well as finite sample properties of the Functional GARCH model in the context of using Functional GARCH models to forecast intraday value-at-risk. To do so, in \Cref{subsec:ScalarGARCH}, I will first give a selected excerpt of the main results and models of both univariate and multivariate GARCH models. Second, in \Cref{subsec:FGARCHModel}, I will present the Functional GARCH model and its theoretical properties. Third, in \Cref{subsec:FGARCHEstimation}, two possible methods for estimating the parameters of the Functional GARCH model are introduced and their consistency and asymptotic distributions are investigated. Fourth, in \Cref{subsec:ValueAtRisk}, the concept of value-at-risk and a brief overview of its history is given. Fifth, in \Cref{sec:Simulation}, the finite sample properties of the Functional GARCH model and implications on forecasting intraday value-at-risk are examined via the use of Monte Carlo simulations. Additionally, the Functional GARCH model is compared to two multivariate GARCH models presented in the preceding sections.
+Interest in the quantitative assessment of financial risk has a long history, with key foundations emerging in the early $20^{\text{th}}$ century. An early milestone was Louis Bachelier’s dissertation, which introduced probabilistic modelling into finance and laid the groundwork for modern mathematical finance. More broadly, risk management aims to identify, measure, and evaluate potential losses in order to support decision-making under uncertainty. To this end, risk managers employ specific risk measures to assess the exposure associated with a particular decision or investment.\\
+One of the most widely used measures of market risk, defined as the risk of losses arising from on- and off-balance-sheet positions, is value-at-risk (VaR). Early contributions to the measurement of downside risk can be found in \citet{Leavens1945}, while related concepts appear in the safety-first criterion of \citet{Roy1952} and the mean--variance framework of \citet{Markowitz1952}. However, these works did not define VaR in its modern form. VaR emerged as an operational tool for market risk measurement in the early 1990s, when J.P. Morgan introduced it internally as a standardized approach to measuring firm-wide market risk. The public release of the \textit{RiskMetrics} methodology in 1994 contributed to the widespread adoption of VaR by financial institutions. VaR was subsequently incorporated into financial regulation through the 1996 Market Risk Amendment to the Basel I Accord, which allowed banks to use internal VaR models for the calculation of regulatory capital. Since the forecasting of VaR requires an assessment of the conditional distribution of returns, models for time-varying volatility play a central role in its practical implementation.\\
+In practical applications, one common approach to forecasting VaR is to model the conditional volatility of financial returns using autoregressive conditional heteroskedasticity models. The GARCH model, introduced by \citet{Bollerslev1986} as a generalization of the ARCH model of \citet{Engle1982}, differs fundamentally from standard time series models such as ARMA or VAR models. Rather than focusing on the conditional mean, ARCH and GARCH models describe the conditional variance by relating current volatility to past squared returns and past volatility. This approach is motivated by well-known stylized facts of financial time series: while returns typically display little autocorrelation, squared or absolute returns often exhibit strong and persistent dependence, and volatility tends to cluster over time \citep{mandelbrot1963variation,taylor2011asset}. By explicitly modeling conditional volatility, GARCH-type models provide a natural framework for time-varying financial risk and thus for the forecasting of VaR. However, the increasing availability of high-frequency financial data has created new settings in which risk must be assessed at an intraday level, thereby calling for frameworks that can make fuller use of such data.\\
+The increasing availability of high-frequency financial data, together with the growth of high-frequency trading and the demand for timely risk assessment, has intensified the need for methods that capture intraday volatility dynamics. When intraday observations are viewed as realizations of curves over a trading day, Functional Data Analysis (FDA) offers a natural framework for their analysis. FDA studies data that are represented as functions or curves; see, for example, \citet{Ramsay2005}, \citet{hsing2015theoretical}, and \citet{kokoszka2017introduction}.\\
+Against this background, recent work has combined ideas from volatility modelling and functional time series analysis. \citet{hormann2013functional} extend the ARCH framework to the functional setting, and \citet{Aue2017} subsequently develop a functional version of the GARCH model. This framework is particularly relevant for high-frequency financial applications, where intraday return dynamics can be represented as curves. In a related application, \citet{RICE20201023} apply the Functional GARCH (FGARCH) model to the forecasting of intraday value-at-risk curves.\\
+Despite these developments, the available results are technically demanding and often presuppose substantial background knowledge in functional data analysis and financial econometrics. As a result, the model is not easily accessible to readers seeking a structured introduction to its theoretical background, estimation, and practical use. The present thesis therefore aims to summarize and contextualize the existing literature while also examining aspects that are particularly relevant for applications. In particular, it discusses the relationship between the FGARCH model and closely related alternatives such as the PC-GARCH model, studies finite-sample behavior under heavy-tailed data-generating processes in a Monte Carlo setting, and highlights practical implementation issues. In this sense, the thesis is intended both as an introduction to the FGARCH framework and as an investigation of its use for intraday value-at-risk forecasting.\\
+At the same time, the scope of the thesis is deliberately limited. It does not aim to develop new theoretical results for the FGARCH model, nor does it attempt to provide a comprehensive comparison with all competing approaches to multivariate or functional volatility modelling. Instead, the focus lies on presenting and contextualizing the existing theory, comparing the FGARCH and PC-GARCH frameworks, and studying their finite-sample behavior in a Monte Carlo setting with a view toward intraday value-at-risk forecasting. Likewise, although the limitations of value-at-risk are discussed, the thesis does not seek to provide a general assessment of alternative risk measures.\\
+Against this background, the aim of this thesis is to examine the theoretical properties and finite-sample performance of the FGARCH model, with a particular focus on forecasting intraday value-at-risk. In particular, this thesis contributes to the existing literature by providing an overview of the theoretical results available for FGARCH models, highlighting selected open problems, and studying their use for intraday value-at-risk forecasting in a Monte Carlo setting. Furthermore, the FGARCH model is related to the principal component GARCH (PC-GARCH) model, since both approaches rely on principal components to reduce dimensionality. Their relationship is examined from a theoretical perspective, and their performance is compared by means of Monte Carlo simulations. Finally, practical issues that arise when applying FGARCH models are discussed, and possible ways to address them are outlined.\\
+These objectives can be expressed in terms of the following research questions: What are the main theoretical properties of the FGARCH model, and which difficulties arise when moving from multivariate to functional data? Which estimation strategies for FGARCH models exist, and what are their respective advantages and disadvantages? What practical challenges arise when applying FGARCH models to forecast intraday value-at-risk? How does the FGARCH model perform in finite samples, especially under heavy-tailed data-generating processes? How does its performance compare with that of the PC-GARCH model? What possible extensions of the FGARCH model remain open for future research?\\
+The results of this thesis can be summarized as follows:...\\
+This thesis proceeds as follows. First, \Cref{subsec:ScalarGARCH} provides a selective overview of the main models and results for univariate and multivariate GARCH processes. Second, \Cref{subsec:FGARCHModel} presents the FGARCH model and discusses its theoretical properties. Third, \Cref{subsec:FGARCHEstimation} introduces two estimation methods for the FGARCH model and examines their consistency and asymptotic distributions. Fourth, \Cref{subsec:ValueAtRisk} presents a mathematical definition of value-at-risk, discusses its main theoretical properties, and reviews important criticisms of the measure. Fifth, \Cref{sec:Simulation} examines the finite-sample performance of the FGARCH model and its implications for forecasting intraday value-at-risk using Monte Carlo simulations. In addition, the FGARCH model is compared with the PC-GARCH model introduced in the preceding sections.\\
+Finally, \Cref{sec:Discussion} concludes and discusses extensions of the FGARCH model as well as directions for future research.
 \section{Functional GARCH}
 \label{sec:FGARCH}
 \subsection{(Scalar) GARCH and Multivariate GARCH}
 \label{subsec:ScalarGARCH}
-Before I turn to the functional GARCH model, I will focus on the scalar version of the GARCH model, both in the univariate and multivariate cases.\\
-An univariate GARCH(p,q) model can be described by its first two moments:
+Before turning to the FGARCH model, I first consider the scalar version of the GARCH model in both the univariate and multivariate setting.\\
+An univariate GARCH$(p,q)$ model can be described by its first two moments:
 \begin{definition}[GARCH(p,q) Process]
     A process $(y_t)$ is called a GARCH(p,q) process if its first two conditional moments exist and satisfy:
     \begin{enumerate}
@@ -108,116 +133,141 @@ An univariate GARCH(p,q) model can be described by its first two moments:
         \end{align}
     \end{enumerate}
 \end{definition}
-A helpful representation of the GARCH(p,q) process can be obtained by defining an error term $\nu_t=y_t^2-\sigma_t^2$ and replacing $\sigma^2$ with $y^2-\nu$
+To relate the GARCH$(p,q)$ model to more familiar linear time series structures, define the innovation term $\nu_t=y_t^2-\sigma_t^2$ and substitute $\sigma_t^2=y_t^2-\nu_t$ into the volatility equation
 \begin{align}
 \label{ARMAstructure}
     y_t^2=\delta+\sum_{i=0}^r\overbrace{(\alpha_i+\beta_i)}^{\text{$\kappa_i$}}y_{t-i}^2+\nu_t-\sum_{j=1}^p\beta_j\nu_{t-j}=\delta+\sum_{i=0}^r\kappa_iy_{t-i}^2+\nu_t-\sum_{j=1}^p\beta_j\nu_{t-j}
 \end{align}
-where $r=\mathrm{max}(p,q)$ with $\alpha_i=0$ ($\beta_j=0$) if $i>q$ ($j>p$). From this representation, it can be seen that a GARCH(p,q) process follows an ARMA(r,p)-like structure for the squared values $y_t^2$. This insight also leads to the GARCH model being referred to as a generalization of the ARCH model which follows an AR-structure for the volatility equation. It can be shown, similarly to the AR and ARMA models, that a GARCH(p,q) process is equivalent to an ARCH($\infty$) process \citep{francq2019garch}. Note that $(\nu_t)$ is not i.i.d. and therefore cannot be used to examine the existence of a stationary solution of the GARCH(p,q) process.\\
-A more restrictive yet often useful definition of a GARCH process is that of a strong GARCH(p,q) process. A strong univariate GARCH(p,q) process can be represented as follows:
+where $r=\mathrm{max}(p,q)$ with $\alpha_i=0$ ($\beta_j=0$) if $i>q$ ($j>p$). \labelcref{ARMAstructure} shows that the squared process $(y_t^2)$ admits an ARMA$(r,p)$-type representation. This also helps explain why the GARCH model is viewed as a generalization of the ARCH model: just as an ARMA process extends an AR process, the GARCH model extends the ARCH model. Moreover, similarly to the relationship between AR and ARMA models, a GARCH$(p,q)$ process can be represented as an ARCH$(\infty)$ process \citep{francq2019garch}. It should be noted, however, that $(\nu_t)$ is generally not i.i.d. Consequently, the representation in \labelcref{ARMAstructure} cannot be treated as a standard ARMA model when examining the existence of stationary solutions to the GARCH$(p,q)$ process.\\
+A more restrictive, yet often useful, version of the GARCH model is the strong GARCH$(p,q)$ process. A strong univariate GARCH$(p,q)$ process is given by:
 \begin{gather}
     y_t = \sigma_t\varepsilon_t \\
-    \sigma_t^2 = \delta + \sum_i^p \alpha_i y_{t-i}^2 + \sum_j^q \beta_j \sigma_{t-i}^2
+    \sigma_t^2 = \delta + \sum_{i=1}^q \alpha_i y_{t-i}^2 + \sum_{j=1}^p \beta_j \sigma_{t-j}^2
     \label{Eq2StrongGARCH}
 \end{gather}
-where $(\varepsilon_t)$ is $\mathrm{i.i.d.}$ Additionally, it is often assumed that $E[\varepsilon_t|\varepsilon_j, j<t]=0$ and $\mathrm{Var}[\varepsilon_t]=1$.\\
-I will focus on the strong GARCH(1,1) process since an equivalent functional version of this process is also used in \citet{Aue2017} as well as \citet{RICE20201023}.
-The strong GARCH(1,1) process is the simplest specification of the strong GARCH(p,q) processes. Nevertheless, this specification is also one of the most widely used in practice.\\ % Add reference!!!
-Before listing the conditions for a stationary solution to the strong GARCH(1,1) process to exist, note that the second equation of the strong GARCH(1,1) process can be rewritten as follows:
+where $(\varepsilon_t)$ is $\mathrm{i.i.d.}$ In addition, it is often assumed that $\mathbb{E}[\varepsilon_t|\varepsilon_j, j<t]=0$ and $\mathrm{Var}[\varepsilon_t]=1$.\\
+In the following, the focus will be on the strong GARCH$(1,1)$ process, since the corresponding functional version is studied in \citet{Aue2017} and applied in \citet{RICE20201023}.
+The strong GARCH$(1,1)$ process is the simplest specification within the class of strong GARCH models. Despite its simplicity, it is also one of the most widely used specifications in practice \citep{Zivot2009}.\\
+To study the existence of a stationary solution to the strong GARCH$(1,1)$ process, it is useful to rewrite the volatility equation as
 \begin{align}
-    \sigma_t^2 = \delta + \gamma_{t-1} \sigma_{t-1}^2, \quad \text{where }\gamma_t=\alpha\varepsilon_t^2+\beta
+    \sigma_t^2 = \delta + \gamma_{t-1} \sigma_{t-1}^2, \quad \text{where }\gamma_t=\alpha\varepsilon_t^2+\beta.
 \end{align}
-From this representation, it can be seen that the volatility equation of the strong GARCH process can also be represented as an AR model with a random coefficient. This representation is useful for studying the existence of a stationary and ergodic solution.\\
-It can be shown that there exists a strictly stationary, non-anticipative, ergodic solution to the strong GARCH(1,1) process if the following condition is satisfied:
+This representation shows that the volatility equation of the strong GARCH$(1,1)$ process can be viewed as an autoregressive model with random coefficients. This representation is useful for studying the existence of a strictly stationary and ergodic solution.\\
+The following condition guarantees the existence of a strictly stationary, non-anticipative, and ergodic solution to the strong GARCH$(1,1)$ process:
 \begin{theorem}[Strict stationarity of the strong GARCH(1,1) process]
 \label{stationarityscalarGARCH11}
     If
     \begin{gather}
-        -\infty\leq\mathbb{E}\,\ \mathrm{log}\{\overbrace{\alpha\varepsilon_t^2+\beta}^{\gamma_t}\}<0,
+        -\infty\leq\mathbb{E}[ \log\{\overbrace{\alpha\varepsilon_t^2+\beta}^{\gamma_t}\}]<0,
     \end{gather}
     then the infinite sum
     \begin{gather}
-        h_t = \delta+\sum_{i=1}^{\infty}\Gamma_{t,i}\delta, \quad \text{where }\Gamma_{t,i}=\gamma_{t-1}...\gamma_{t-i}
+        h_t = \delta \Bigl(1 + \sum_{i=1}^{\infty}\Gamma_{t,i}\Bigr), \quad \text{where }\Gamma_{t,i}=\gamma_{t-1}\cdots\gamma_{t-i}
     \end{gather}
-    converges almost surely, and the process $(y_t)$ defined by $y_t=\sqrt{h_t}\varepsilon_t$ is the unique strictly stationary solution of model (2.7). This solution is non-anticipative and ergodic.
+    converges almost surely, and the process $(y_t)$ defined by $y_t=\sqrt{h_t}\varepsilon_t$ is the unique strictly stationary solution of the strong GARCH(1,1) model. This solution is non-anticipative and ergodic.
 \end{theorem}
-To prove \Cref{stationarityscalarGARCH11}, note that \labelcref{Eq2StrongGARCH} can be solved recursively to attain $h_t$. Showing that $h_t$ converges involves an application of the Cauchy Root Test as well as the strong law of large numbers. Uniqueness then follows by contradiction, assuming the existence of another solution and showing that it must coincide with the original solution.\\
-Ergodicity describes the property of a stochastic process that time averages along a single, sufficiently long realization converge to the same values as ensemble averages taken over many realizations. A sufficient and particularly strong way to guarantee ergodicity is geometric ergodicity, which requires not only convergence to a unique stationary distribution but also convergence at an exponential rate. It can be shown that $(\sigma_t;t\in \mathbb{Z})$ is geometrically ergodic under mild assumptions meaning that initial conditions are forgotten exponentially fast and sample averages converge to their population counterparts. $(y_t;t\in\mathbb{Z})$ is geometrically $\beta$-mixing which implies (weak) ergodicity. To prove that the GARCH(1,1) process is geometrically ergodic first note that the volatility equation of the GARCH process can be rewritten into a Markov Chain representation. One can then make use of a Theorem from \citet{FeignTweedie1985}. They show that a Markov Chain that is also an aperiodic, irreducible Feller Chain is geometrically ergodic if it satisfies an energy condition. Proving that $(y_t;t\in\mathbb{Z})$ is geometrically $\beta$-mixing follows from the geometric ergodicity of $(\sigma_t;t\in\mathbb{Z})$ and the fact that $(\varepsilon_t;t\in\mathbb{Z})$ is i.i.d. $(y_t;t\in\mathbb{Z})$ is not geometrically ergodic since it is not Markovian. The complete proof can be found in the Appendix.\\ % Add a sentence on ergodicity and non-anticipativeness Maybe try using Cleveref here if there is time.
-%The more general proof for strong GARCH(p,q) processes follows a similar structure
-Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha$, and $\beta$ have to be estimated. GARCH models are typically estimated using (quasi-)maximum likelihood estimation. (Quasi-)maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to least-squares requiring higher moments and being less efficient than (quasi-)maximum likelihood estimation \citep{francq2019garch}.\\
-The likelihood equations for the GARCH(1,1) process are as follows
-\begin{gather}
-    L_n(\theta;y_1,..,y_n)=\prod_{t=1}^n\frac{1}{\sqrt{2\pi \tilde{\sigma}_t^2}}\exp\left(-\frac{y_t^2}{2\tilde{\sigma}_t^2}\right); \quad \tilde{\sigma}_t^2=\tilde{\sigma}_t^2(\theta)=\delta+\alpha y_{t-1}^2+\beta\tilde{\sigma}_{t-1}^2.
-\end{gather}
-Here $\theta$ is a vector containing the estimates $\delta$, $\alpha$ and $\beta$ and $\tilde{\sigma}_t^2$ is calculated recursively. The true parameters are $\theta_0=(\delta_0,\alpha_0,\beta_0)^\top$.\\
-Taking the logarithm, the likelihood optimization problem can be simplified to minimizing the following equation
-\begin{gather}
-    \mathcal{I}_n=\frac{1}{n}\sum_{t=1}^n \frac{y_t^2}{\tilde{\sigma}_t^2}+\log \tilde{\sigma}_t^2.
-\end{gather}
+To prove \Cref{stationarityscalarGARCH11}, note that \labelcref{Eq2StrongGARCH} can be solved recursively to obtain $h_t$. Showing that $h_t$ converges involves an application of the Cauchy root test as well as the strong law of large numbers. Uniqueness is then established by contradiction: assuming the existence of another solution, one shows that it must coincide almost surely with the original one.\\
+Ergodicity describes the property of a stochastic process that time averages along a single, sufficiently long realization converge to the same values as ensemble averages taken over many realizations. A particularly strong sufficient condition for ergodicity is geometric ergodicity, which requires not only convergence to a unique stationary distribution, but convergence at an exponential rate. It can be shown that $(\sigma_t;t\in \mathbb{Z})$ is geometrically ergodic under suitable regularity conditions. Intuitively, this means that the effect of initial conditions vanishes exponentially fast and that sample averages converge to their population counterparts. Moreover, $(y_t;t\in\mathbb{Z})$ is geometrically $\beta$-mixing, a strong dependence property that implies ergodicity. To prove that the GARCH(1,1) process is geometrically ergodic first note that the volatility equation of the GARCH process can be rewritten into a Markov Chain representation. One can then make use of a Theorem from \citet{FeignTweedie1985}. They show that a Markov chain that is also an aperiodic, irreducible Feller chain is geometrically ergodic if it satisfies a drift condition. Proving that $(y_t;t\in\mathbb{Z})$ is geometrically $\beta$-mixing follows from the geometric ergodicity of $(\sigma_t;t\in\mathbb{Z})$ and the fact that $(\varepsilon_t;t\in\mathbb{Z})$ is i.i.d. $(y_t;t\in\mathbb{Z})$ is not geometrically ergodic since it is not Markovian. The complete proof can be found in \citet{francq2019garch}. A precise mathematical definition of ergodicity is given in the appendix.
+%\begin{remark}{Physical intuition behind mixing and ergodicity}
+    %A useful intuition for both statistical mixing and ergodicity is obtained from the physical act of stirring different liquids in a glass. For this example, think of the presence of a specific liquid in tiny predefined areas of the glass as a random event. Each observation would be taken after one stir. Each stir would then correspond to iterating the process’s transition mechanism. (Weak) Ergodicity in this context describes the property that each liquid would visit each area of the glass in relation to the dose of the liquid that is contained in the glass and the size of the area after a long time. Geometric ergodicity means that the liquid is observed in each of these areas proportionally to the size of the area and the dose of the liquid exponentially fast.\\
+    %Such a process is called mixing when the influence of the past on the future vanishes as the number of stirring steps increases. Different mixing coefficients quantify “how independent” past and future become. That means that for a process that is mixing it is impossible to tell how the liquids were filled into the glass to the start process after sufficient enough stirs. From this example, it can be inferred that geometric ergodicity implies different mixing concepts since after a modest number of stirs the composition is already very close to its long-run law, and any memory of the initial arrangement is forgotten at an exponential rate.\\
+    %A physical intuition of both mixing and ergodicity is thus that for such a process where the glass is filled with liquids that are more fluid is likely mixing or geometric ergodic and for such a process where the glass is filled with liquids that are more viscous the process is likely (only) ergodic.
+%\end{remark}
+\begin{remark}{Physical intuition behind mixing and ergodicity}{rem:IntuitionMixingErgodicity}
+    A useful intuition for statistical mixing and ergodicity can be obtained from the physical act of stirring different liquids in a glass. Imagine that the glass is divided into many tiny regions and that we observe which liquid occupies each region after every stir. If we record the configuration after each stir, the resulting sequence of observations can be interpreted as a realization of a stochastic process, while each stir corresponds to one iteration of its transition mechanism.
+
+    Ergodicity intuitively means that, after many stirring steps, the liquids become distributed throughout the glass according to their overall proportions. In other words, the long-run fraction of time that a given liquid is observed in a particular region corresponds to the amount of that liquid in the glass and the size of the region. Geometric ergodicity strengthens this idea by stating that the distribution of liquids across the glass approaches this long-run configuration at an exponential rate.
+
+    The notion of mixing describes how quickly the influence of the past on the future disappears. Mixing coefficients such as the $\alpha$- and $\beta$-mixing coefficients quantify how close observations that are far apart in time are to being statistically independent. In the stirring analogy, after sufficiently many stirs the spatial arrangement of liquids becomes nearly independent of how the liquids were initially poured into the glass. Roughly speaking, the $\alpha$-mixing coefficient measures the remaining dependence between past and future events, while the $\beta$-mixing coefficient provides a stronger measure of how far their joint behavior is from statistical independence. Both therefore quantify how effectively the system "forgets" its earlier states.
+
+    This intuition also illustrates the relationship between ergodicity and mixing. If the liquids mix very efficiently—like highly fluid liquids—then the distribution in the glass quickly approaches its long-run configuration and the dependence between distant observations vanishes rapidly. This corresponds to geometric ergodicity and typically implies strong mixing properties. By contrast, if the liquids are more viscous, the system may still eventually explore all regions of the glass (ergodicity), but the approach to the long-run distribution and the loss of dependence can occur much more slowly.
+\end{remark}
+%Since in practice, only $y_t$ is observed, the parameters $\delta$,$\alpha$, and $\beta$ have to be estimated. GARCH models are typically estimated using (quasi-)maximum likelihood estimation. (Quasi-)maximum likelihood estimation is preferred for GARCH models over least-squares estimation due to least-squares requiring higher moments and being less efficient than (quasi-)maximum likelihood estimation \citep{francq2019garch}.\\
+%The likelihood equations for the GARCH(1,1) process are as follows
+%\begin{gather}
+   % L_n(\theta;y_1,..,y_n)=\prod_{t=1}^n\frac{1}{\sqrt{2\pi \tilde{\sigma}_t^2}}\exp\left(-\frac{y_t^2}{2\tilde{\sigma}_t^2}\right); \quad \tilde{\sigma}_t^2=\tilde{\sigma}_t^2(\theta)=\delta+\alpha y_{t-1}^2+\beta\tilde{\sigma}_{t-1}^2.
+%\end{gather}
+%Here $\theta$ is a vector containing the estimates $\delta$, $\alpha$ and $\beta$ and $\tilde{\sigma}_t^2$ is calculated recursively. The true parameters are $\theta_0=(\delta_0,\alpha_0,\beta_0)^\top$.\\
+%Taking the logarithm, the likelihood optimization problem can be simplified to minimizing the following equation
+%\begin{gather}
+%    \mathcal{I}_n=\frac{1}{n}\sum_{t=1}^n \frac{y_t^2}{\tilde{\sigma}_t^2}+\log \tilde{\sigma}_t^2.
+%\end{gather}
 %Taking the first derivative leads to the following moment condition
 %\begin{gather}
    %\frac{1}{n} \sum_{t=1}^n \{y_t^2-\tilde{\sigma}_t^2\}\frac{1}{\tilde{\sigma}_t^4}\frac{\partial \tilde{\sigma}_t^2}{\partial \theta}=0.
 %\end{gather}
-From here, parameters can be found by using an optimization algorithm, e.g. the Newton-Raphson method.\\
-It can be shown that the quasi-maximum likelihood estimator is consistent and asymptotically normal with the asymptotic variance of the estimator being equal to the inverse of the Fisher Information matrix when $(\varepsilon_t; t\in\mathbb{Z})$ is Gaussian and the inverse of the adjusted Fisher Information matrix when it is not. The details of the proof are omitted here for the sake of conciseness.\\
-Next, I will give a short exposition of multivariate GARCH processes since, in practice, they are very closely related to Functional GARCH processes. Defining a multivariate GARCH process is not as straightforward as for the univariate case. This is the case since adding more processes to the multivariate GARCH process does not only require estimating another conditional variance equation, but also the conditional covariances between the processes. This quickly leads to estimation becoming statistically infeasible if estimation stays unconstrained. Therefore, the conditional covariance matrix $H_t$ follows an explicit specification. In the following, I will present two of these specifications since they are closely connected to the Functional GARCH model. Throughout this I will assume that $y_t,\varepsilon_t\in \mathbb{R}^m$ and that $\varepsilon_t$ is an i.i.d. vector.\\
-First, I consider the Principal Components GARCH (PC-GARCH) model, which is defined by
+%From here, parameters can be found by using an optimization algorithm, e.g. the Newton-Raphson method.\\
+%It can be shown that the quasi-maximum likelihood estimator is consistent and asymptotically normal with the asymptotic variance of the estimator being equal to the inverse of the Fisher Information matrix when $(\varepsilon_t; t\in\mathbb{Z})$ is Gaussian and the inverse of the adjusted Fisher Information matrix when it is not. The details of the proof are omitted here for the sake of conciseness.\\
+Next, I will provide a short exposition of multivariate GARCH processes, as they are very closely related to FGARCH processes in practice. Defining a multivariate GARCH process is not as straightforward as in the univariate case. This is because moving from the univariate to the multivariate setting requires not only the modeling of additional conditional variances, but also the conditional covariances between the components. Without further restrictions, the resulting number of parameters quickly becomes too large for reliable estimation and asymptotic analysis. Therefore, the conditional covariance matrix $H_t$ follows an explicit specification. In the following, I will present two of these specifications since they are closely connected to the FGARCH model. Throughout this discussion, I will assume that $y_t,\varepsilon_t\in \mathbb{R}^m$ and that $\varepsilon_t$ is an i.i.d. vector.\\
+First, I consider the PC-GARCH model, which is defined by
 \begin{gather}
 \label{PCGARCHyequation}
     y_t = H_t^{\frac{1}{2}}\varepsilon_t,\\
     \label{PCGARCHHequation}
     H_t = P \Lambda_t P^{\top}.
 \end{gather}
-Here, $P$ is an $m \times m$ orthogonal matrix, while $\Lambda_t$ is an $m \times m$ diagonal matrix with diagonal elements $\text{diag}(\lambda_{1,t}, \lambda_{2,t}, \ldots, \lambda_{m,t})$. The matrix $P$ is typically estimated using Principal Component Analysis, and the diagonal elements of $\Lambda_t$ are assumed to follow univariate GARCH(1,1) processes:
+Here, $P$ is an $m\times m$ orthogonal matrix, while $\Lambda_t = \mathrm{diag}(\lambda_{1,t},\lambda_{2,t},\ldots,\lambda_{m,t})$ is an $m\times m$ diagonal matrix. The matrix $P$ is typically estimated using Principal Component Analysis, and the diagonal elements of $\Lambda_t$ are assumed to follow univariate GARCH(1,1) processes:
 \begin{gather}
 \label{PCGARCHlambdaequation}
     \lambda_{i,t} = \delta_i + \alpha_i f_{i,t-1}^{2} + \beta_i \lambda_{i,t-1}, \quad i = 1, \ldots, m.
 \end{gather}
-In this specification, $f_{i,t}$ denotes the $i$-th component of the transformed series $f_t = P^\top y_t$. \labelcref{PCGARCHlambdaequation} is estimated using quasi-maximum likelihood estimation, although alternative specifications for $\lambda_{i,t}$ are also possible.\\
-From the representation in \labelcref{PCGARCHHequation}, it follows directly that the PC-GARCH model decomposes the conditional covariance matrix $(H_t)$ into a set of constant eigenvectors and time-varying eigenvalues. As discussed in \Cref{sec:Simulation} and in the Appendix, the PC-GARCH model is closely related to the discretized Functional GARCH model, in which the underlying functions are observed on a finite grid.\\
+In this specification, $f_{i,t}$ denotes the $i$-th component of the transformed series $f_t = P^\top y_t$. The parameters in \Cref{PCGARCHlambdaequation} are typically estimated by quasi-maximum likelihood. Alternative specifications for $\lambda_{i,t}$ are also possible.\\
+From the representation in \labelcref{PCGARCHHequation}, it follows directly that the PC-GARCH model decomposes the conditional covariance matrix $H_t$ into a set of constant eigenvectors and time-varying eigenvalues. As will be discussed in \Cref{sec:Simulation}, the PC-GARCH model is closely related to a discretized version of the FGARCH model, in which the underlying functions are observed on a finite grid.\\
 The second multivariate GARCH specification considered is the Constant Conditional Correlation (CCC) GARCH model, which is defined as
 \begin{gather}
     y_t = H_t^{\frac{1}{2}}\varepsilon_t,\\
     \label{CCCGARCHHequation}
     H_t = D_t R D_t^{\top}.
 \end{gather}
-Here, $D_t$ is an $m \times m$ diagonal matrix with diagonal elements $\text{diag}(\sqrt{h_{1,t}}, \sqrt{h_{2,t}}, \ldots, \sqrt{h_{m,t}})$, and $R$ is an $m \times m$ constant correlation matrix. The diagonal elements of $D_t$ are assumed to follow a GARCH(1,1)-type specification given by
+Here, $D_t=\text{diag}(\sqrt{h_{1,t}}, \sqrt{h_{2,t}}, \ldots, \sqrt{h_{m,t}})$ is an $m \times m$ diagonal matrix and $R$ is an $m \times m$ constant correlation matrix. The vector of conditional variances $h_t$ is assumed to follow a GARCH(1,1)-type specification given by
 \begin{gather}
 \label{CCCGARCHsmallhequation}
     h_t = \delta + A (y_{t-1} \odot y_{t-1}) + B h_{t-1},
 \end{gather}
-where $\odot$ denotes the elementwise (Hadamard) product, $\delta$ is an $m$-dimensional vector, and $A$ and $B$ are $m \times m$ parameter matrices. \labelcref{CCCGARCHHequation} shows that $H_t$ consists of time-varying, variable-specific conditional variances combined with a constant correlation structure. Additionally, as can be seen from \labelcref{CCCGARCHsmallhequation} the variable specific conditional variances evolves dynamically, depending not only on each variable’s own past but also on the past of other variables. As discussed in \Cref{sec:FGARCH}, the Functional GARCH model can be interpreted as a semi-strong CCC-GARCH model with $R = \mathbb{I}$, where $\mathbb{I}$ denotes the identity matrix, after projection onto a finite set of basis functions.
+where $\odot$ denotes the elementwise (Hadamard) product, $\delta$ is an $m$-dimensional vector, and $A$ and $B$ are $m \times m$ parameter matrices. \labelcref{CCCGARCHHequation} shows that $H_t$ consists of time-varying, variable-specific conditional variances combined with a constant correlation structure. In addition, \Cref{CCCGARCHsmallhequation} shows that the variable-specific conditional variances evolve dynamically, depending not only on each variable’s own past but also on the past of the other variables. As will be discussed in \Cref{subsec:FGARCHEstimation}, once the functional parameters are projected onto a finite set of basis functions, estimation of the FGARCH model reduces to that of a semi-strong CCC-GARCH model with $R = \mathbb{I}$, where $\mathbb{I}$ denotes the identity matrix.\\
+Since in practice only the process $(y_t)_{t\in\mathbb{Z}}$ is observed, the parameters of any univariate or multivariate GARCH model have to be estimated. GARCH models are typically estimated using (quasi-)maximum likelihood estimation. For GARCH models, (quasi-)maximum likelihood estimation is generally preferred to least-squares estimation, since least-squares methods require stronger moment conditions and are typically less efficient \citep{francq2019garch}. In the following, I will illustrate the estimation procedure for the univariate GARCH(1,1) model. Analogous arguments apply to other GARCH specifications.\\
+The Gaussian quasi-likelihood for the GARCH$(1,1)$ model is given by
+\begin{gather}
+    L_n(\underline{\theta};y_1,..,y_n)=\prod_{t=1}^n\frac{1}{\sqrt{2\pi \tilde{\sigma}_t^2}}\exp\left(-\frac{y_t^2}{2\tilde{\sigma}_t^2}\right); \quad \tilde{\sigma}_t^2=\tilde{\sigma}_t^2(\underline{\theta})=\underline{\delta}+\underline{\alpha} y_{t-1}^2+\underline{\beta}\tilde{\sigma}_{t-1}^2.
+\end{gather}
+Here, $\underline{\theta}=(\underline{\delta},\underline{\alpha},\underline{\beta})^\top$ denotes the parameter vector, and $\tilde{\sigma}_t^2$ is computed recursively. The true parameter vector is denoted by $\theta=(\delta,\alpha,\beta)^\top$.\\
+Taking logarithms and omitting constants, the optimization problem is equivalent to minimizing
+\begin{gather}
+    \mathcal{I}_n=\frac{1}{n}\sum_{t=1}^n\left( \frac{y_t^2}{\tilde{\sigma}_t^2}+\log \tilde{\sigma}_t^2\right).
+\end{gather}
+The parameter estimator is then obtained numerically by minimizing this criterion, for example by using a Newton-Raphson algorithm.\\
+Under suitable regularity conditions, the quasi-maximum likelihood estimator is consistent and asymptotically normal. If the innovations are Gaussian, its asymptotic variance is given by the inverse Fisher information matrix. If the innovations are non-Gaussian, the asymptotic variance instead involves the inverse of an adjusted information matrix. The details of the proof are omitted here for the sake of conciseness.
 \subsection{Model}
 \label{subsec:FGARCHModel}
-The next section will introduce the functional GARCH model and highlight its properties. I will start by defining the model itself.\\
-A functional GARCH process is defined as follows:
-\begin{definition}[Functional GARCH(p,q) Process]
+This section introduces the FGARCH model and discusses its key theoretical properties. I begin with the definition of the model.\\
+A FGARCH process is defined as follows:
+\begin{definition}[FGARCH(p,q) Process]
 \label{fGARCHpq}
-A sequence of random functions $(y_i(t))$ is called a functional GARCH process if it satisfies the following equations:
+A sequence of random functions $(y_i(t))_{i\in \mathbb{Z}}$ is called a FGARCH process of order $(p,q)$ if it satisfies the following equations
     \begin{gather}
         y_i(t) = \sigma_i(t)\varepsilon_i(t)\\
-        \sigma_i^2(t) = \delta(t)+\sum_{j=1}^p\alpha_jy_{i-j}^2(t)+\sum_{k=1}^q\beta_k\sigma_{i-k}^2(t)
+        \sigma_i^2(t) = \delta(t)+\sum_{j=1}^q\alpha_jy_{i-j}^2(t)+\sum_{k=1}^p\beta_k\sigma_{i-k}^2(t).
     \end{gather}
 \end{definition}
-Here, $\delta(t)$ is a non-negative function, and $(\alpha_j)_{j\in (1,...,p)}$ and $(\beta_k)_{k \in (1,...,q)}$ are both integral operators $\alpha_jx(t)=\int \alpha_j(t,s)x(s)ds$ ($\beta_jx(t)=\int \beta_j(t,s)x(s)ds$) that map non-negative functions to non-negative functions. $x$ here denotes an arbitrary element in $L^2[0,1]$. By convention, I restrict the intraday time variable to $t\in[0,1]$. This is without loss of generality since data that do not follow this convention can easily be converted into this format. $\int_0^1$ is therefore shortened to $\int$. The second time variable $i$ denotes the trading day. $(\varepsilon_i(t))_{i\in\mathbb{Z}}$ are i.i.d. functions.\\
-From \Cref{fGARCHpq}, it is easily seen that the Functional GARCH(p,q) process follows a similar functional structure to the strong (scalar) GARCH process. As a consequence, \Cref{fGARCHpq} can also be rewritten into a similar ARMA-like structure as in the scalar version in \labelcref{ARMAstructure}.\\
-To stick closely to the paper from \citet{Aue2017}, as well as \citet{RICE20201023}, I will focus on the Functional GARCH(1,1) model. That reduces the equations of the Functional GARCH(p,q) model to:
+Here, $\delta(t)\in L^2[0,1]$ is a non-negative function, and $(\alpha_j)_{j\in (1,...,p)}$ and $(\beta_k)_{k \in (1,...,q)}$ are bounded integral operators in $L^2[0,1]^2$ given by $(\alpha_jx)(t)=\int \alpha_j(t,s)x(s)ds$ and $(\beta_kx)(t)=\int \beta_k(t,s)x(s)ds$ that map non-negative functions to non-negative functions for $x\in L^2[0,1]$. By convention, I restrict the intraday time variable to $t\in[0,1]$. This is without loss of generality since data that do not follow this convention can be converted into this format. Accordingly, $\int_0^1$ will be abbreviated by $\int$. The second time variable $i$ denotes the trading day. The innovations $(\varepsilon_i(t))_{i\in\mathbb{Z}}$ are i.i.d. random functions.\\
+From \Cref{fGARCHpq}, it is clear that the FGARCH$(p,q)$ process is the functional analogue of the strong (scalar) GARCH process. As a consequence, the model admits an ARMA-type representation, just as in the scalar case discussed in \Cref{ARMAstructure}.\\
+Following \citet{Aue2017} and \citet{RICE20201023}, I focus on the FGARCH$(1,1)$ specification, which is the functional counterpart of the benchmark strong (scalar) GARCH$(1,1)$ model. As discussed previously, despite its simplicity the strong GARCH(1,1) process is also one of the most widely used specifications in practice. For this reason, the FGARCH$(1,1)$ model is a natural starting point in the functional setting. In this case, the FGARCH$(p,q)$ equations reduce to
 \begin{gather}
     \label{FunctionalGARCH11}
     y_i(t) = \sigma_i(t)\varepsilon_i(t)\\
     \label{FunctionalGARCH11volatility}
-    \sigma_i^2(t) = \delta(t)+\alpha y_{i-j}^2(t)+\beta\sigma_{i-k}^2(t)
+    \sigma_i^2(t) = \delta(t)+\alpha y_{i-1}^2(t)+\beta\sigma_{i-1}^2(t).
 \end{gather}
-In the following, conditions for the existence of a stationary solution to the Functional GARCH(1,1) model are discussed. \citet{Aue2017} derive the conditions both for the space $L^2[0,1]$ as well as for the space of continuous functions $C[0,1]$. I will first focus on solutions in $L^2[0,1]$.\\
-To use similar notation to the scalar case, rewrite the volatility equation into:
+In the following, conditions for the existence of a stationary solution to the FGARCH$(1,1)$ process are discussed. \citet{Aue2017} derives these results both for the space $L^2[0,1]$ as well as for the space of continuous functions $C[0,1]$. I restrict attention to the $L^2[0,1]$ setting, since the corresponding results for $C[0,1]$ are of essentially the same form. The main difference is that the innovation functions and the intercept function $\delta(t)$ are assumed to belong to $C[0,1]$, whereas the kernel of the integral operators remain in $L^2[0,1]^2$, so that the resulting operators map $C[0,1]$ into $C[0,1]$.\\
+Using notation analogous to the scalar case, the volatility equation can be written as
 \begin{gather}
 \label{FGARCH11volatilityalternative}
-    \sigma_i^2(t) = \delta(t) + \gamma_{i-1} \sigma_{i-1}^2(t), \quad \text{where }\gamma_i(t,s)=\alpha\varepsilon_i^2(t)+\beta
+    \sigma_i^2(t) = \delta(t) + \gamma_{i-1} \sigma_{i-1}^2(t), \quad \text{where }\gamma_i(t,s)=\alpha(t,s)\varepsilon_i^2(s)+\beta(t,s).
 \end{gather}
-The necessary condition for a stationary solution then is:
-\begin{theorem}[Strict stationarity of the functional GARCH(1,1) process]
+The following theorem provides sufficient conditions for the existence of a strictly stationary solution.
+\begin{theorem}[Strict stationarity of the FGARCH(1,1) process]
 \label{StationarityFGARCH11}
-    Let $\delta(t)\in L^2[0,1]$ be a non-negative function and $\alpha\in L^2[0,1]^2$ and $\beta \in L^2[0,1]^2$ be integral operators that map non-negative functions to non-negative functions. Let $\{\varepsilon_i(t):i\in \mathbb{Z}\}$ be i.i.d. random functions and $\varepsilon_0\in L^{4}[0,1]$ almost surely.
+    Let $\delta(t)\in L^2[0,1]$ be a non-negative function, and let $\alpha$ and $\beta$ be integral operators with kernels in $L^2[0,1]^2$ that map non-negative functions to non-negative functions. Let $\{\varepsilon_i(t):i\in \mathbb{Z}\}$ be i.i.d. random functions and $\varepsilon_0\in L^{4}[0,1]$ almost surely.
     \begin{enumerate}[label=(\roman*)]
         \item If
             \begin{gather}
@@ -229,13 +279,13 @@ The necessary condition for a stationary solution then is:
             \label{FGARCH11StationarySolution}
                 h_i(t)=\delta(t)+\sum_{k=1}^\infty \Gamma_{i,k}\delta(t)
             \end{gather}
-            converges almost surely, and the process $(y_i(t))$ defined by $y_i(t)=\sqrt{h_i(t)}\varepsilon_i(t)$ is the unique strictly stationary solution of the Functional GARCH(1,1) model in \labelcref{FunctionalGARCH11} and \labelcref{FunctionalGARCH11volatility}. This solution is non-anticipative and ergodic.
+            converges almost surely, and the process $(y_i(t))$ defined by $y_i(t)=\sqrt{h_i(t)}\varepsilon_i(t)$ is the unique strictly stationary solution of the FGARCH(1,1) model in \labelcref{FunctionalGARCH11} and \labelcref{FunctionalGARCH11volatility}. This solution is non-anticipative and ergodic.
         \item If there is $\nu>0$ such that 
         \begin{gather}
         \label{FGARCH11StationarityMomentsCondition}
             \mathbb{E}[\left\| \gamma_0 \right\|_\mathcal{S}^\nu ]<1
         \end{gather}
-        then there exists a unique, strictly stationary, and nonanticipative solution in $L^2[0,1]$ to the Functional GARCH(1,1) model and $\mathbb{E}[\left\| \sigma_0^2 \right\|_2^\nu]<\infty$.
+        then there exists a unique, strictly stationary, and nonanticipative solution in $L^2[0,1]$ to the FGARCH(1,1) model and $\mathbb{E}[\left\| \sigma_0^2 \right\|_2^\nu]<\infty$.
     \end{enumerate}
 \end{theorem}
 Here $\left\|\right\|_\mathcal{S}$ is the Hilbert-Schmidt norm defined as
@@ -244,13 +294,13 @@ Here $\left\|\right\|_\mathcal{S}$ is the Hilbert-Schmidt norm defined as
 \end{gather}
 and $\Gamma_{i,k}$ is the following random integral operator
 \begin{gather}
-    (\Gamma_{i,k}x)(t)=\int ...\int \gamma_{i-1}(t,s_1)\gamma_{i-2}(s_1,s_2)...\gamma_{i-k}(s_{k-1},s_k)ds_k...ds_2ds_1.
+    (\Gamma_{i,k}x)(t)=\int ...\int \gamma_{i-1}(t,s_1)\gamma_{i-2}(s_1,s_2)...\gamma_{i-k}(s_{k-1},s_k)x(s_k)ds_k...ds_2ds_1.
 \end{gather}
 Due to the close resemblance between this theorem and \Cref{stationarityscalarGARCH11}, the proof of \Cref{StationarityFGARCH11} follows analogous arguments. First, $h_i(t)$ is obtained by recursively solving \labelcref{FGARCH11volatilityalternative}. Second, the convergence of $h_i(t)$ is established by applying the Cauchy--Schwarz inequality in conjunction with the strong law of large numbers. Finally, the uniqueness of the solution is shown by exploiting the recursive structure of \labelcref{FGARCH11volatilityalternative}. Assuming the existence of an alternative solution implies that both solutions converge to the same limit, which in turn forces them to coincide, thereby yielding a contradiction. The full proof of \Cref{StationarityFGARCH11} can be found in the Appendix.\\
 %My previous version:
 %Due to the strong similarity of this theorem to \ref{stationarityscalarGARCH(1,1)}, proving \ref{StationarityFGARCH(1,1)} follows a similar idea. Firstly, $h_i(t)$ is derived by recursively solving (\ref{FGARCH(1,1)volatilityalternative}). Secondly, to prove the convergence of $h_i(t)$ an application of the Cauchy-Schwarz inequality as well as the strong law of large numbers is needed. Lastly, to prove the uniqueness of the solution, the recursive structure of (\ref{FGARCH(1,1)volatilityalternative}) is used. Assuming that another solution exists results in the two solutions converging to the same limit and therefore both solutions coincide resulting in a contradiction.
-%Both \citet{Cerovecki2019} and \citet{Kuehnert2020} extend the stationarity result in (\ref{FGARCH(1,1)StationaryCondition}). \citet{Cerovecki2019} provide sufficient conditions under which the Functional GARCH model is stationary for the $L^2$ space for any length $p,q$. These conditions are sufficient but not necessary, as stating necessary conditions is more complicated in the functional setting since norms are not equivalent in the infinite dimensional setting. To do so, they make use of the top Lyapunov exponent \citep{Kingman1973}. They show that when applying their result to the FGARCH(1,1) model a milder condition than (\ref{FGARCH(1,1)StationaryCondition}) can be established. However, to do so, they require a different assumption on $\varepsilon_0$. \citet{Kuehnert2020} further expands conditions for stationarity for the FGARCH model to $L^p$ where $p\in[1,\infty)$ and Banach spaces.\\ My version
-Both \citet{Cerovecki2019} and \citet{Kuehnert2020} extend the stationarity result in \labelcref{FGARCH11StationaryCondition}. \citet{Cerovecki2019} derive sufficient conditions for stationarity of the functional GARCH model in $L^2$ for arbitrary orders $p$ and $q$. These conditions are not necessary, as establishing necessity is more difficult in the functional setting due to the non-equivalence of norms in infinite-dimensional spaces. Their approach relies on the top Lyapunov exponent \citep{Kingman1973}. When their general result is applied to the FGARCH(1,1) specification, it leads to a milder condition than \labelcref{FGARCH11StationaryCondition}. However, this comes at the cost of imposing a different assumption on $\varepsilon_0$. \citet{Kuehnert2020} further generalizes stationarity conditions to $L^p$ spaces with $p \in [1,\infty)$, and more broadly, to Banach spaces.\\
+%Both \citet{Cerovecki2019} and \citet{Kuehnert2020} extend the stationarity result in (\ref{FGARCH(1,1)StationaryCondition}). \citet{Cerovecki2019} provide sufficient conditions under which the FGARCH model is stationary for the $L^2$ space for any length $p,q$. These conditions are sufficient but not necessary, as stating necessary conditions is more complicated in the functional setting since norms are not equivalent in the infinite dimensional setting. To do so, they make use of the top Lyapunov exponent \citep{Kingman1973}. They show that when applying their result to the FGARCH(1,1) model a milder condition than (\ref{FGARCH(1,1)StationaryCondition}) can be established. However, to do so, they require a different assumption on $\varepsilon_0$. \citet{Kuehnert2020} further expands conditions for stationarity for the FGARCH model to $L^p$ where $p\in[1,\infty)$ and Banach spaces.\\ My version
+Both \citet{Cerovecki2019} and \citet{Kuehnert2020} extend the stationarity result in \labelcref{FGARCH11StationaryCondition}. \citet{Cerovecki2019} derive sufficient conditions for stationarity of the FGARCH model in $L^2$ for arbitrary orders $p$ and $q$. These conditions are not necessary, as establishing necessity is more difficult in the functional setting due to the non-equivalence of norms in infinite-dimensional spaces. Their approach relies on the top Lyapunov exponent \citep{Kingman1973}. When their general result is applied to the FGARCH(1,1) specification, it leads to a milder condition than \labelcref{FGARCH11StationaryCondition}. However, this comes at the cost of imposing a different assumption on $\varepsilon_0$. \citet{Kuehnert2020} further generalizes stationarity conditions to $L^p$ spaces with $p \in [1,\infty)$, and more broadly, to Banach spaces.\\
 To prove the ergodicity of the above solution, the following corollary is useful.
 \begin{corollary}
     \begin{enumerate}[label=(\roman*)]
@@ -266,9 +316,10 @@ To prove the ergodicity of the above solution, the following corollary is useful
         \labelcref{FirstPointCorollary} implies that both $(\sigma_i^2(t); i\in \mathbb{Z)}$ and $(y_i(t);i\in\mathbb{Z})$ are ergodic.
     \end{enumerate}
 \end{corollary}
-(Weak) ergodicity of Bernoulli shifts is a well established result. (Weak) ergodicity is proven by...\\
-Unlike in the scalar version of the GARCH model proving geometric ergodicity and $\beta$-mixing for the Functional GARCH model is very difficult. That is because for infi However, (weak) ergodicity is not sufficient for the derivation of important statistical results like the central limit theorem. That is because information on how fast dependence decays is needed to establish the convergence of   Since (weak) ergodicity is not sufficient for the application of the functional central limit theorem, \citet{Aue2017} derive the following result.
+(Weak) ergodicity of Bernoulli shifts is a well established result and is implied by the work of \citet{stout1974almost}.\\
+Unlike in the scalar version of the GARCH model establishing geometric ergodicity and $\beta$-mixing for the FGARCH model is very difficult. This is due to the lack of densities for infinite dimensional data as well as the need for additional constraints on the functional parameters $\alpha$ and $\beta$ to establish contuinity like in the proof of geometric ergodicity for the scalar GARCH model. Furthermore, showing that the GARCH process is an irreducible Markov chain is also difficult due to the infinite dimensionality of the data. Establishing small sets is equally complicated. However, (weak) ergodicity alone is not sufficient for the derivation of important statistical results like central limit theorems. That is because information on how fast dependence decays is needed to establish the convergence of sample estimates to real values in distribution. Since (weak) ergodicity is not sufficient for the application of the functional central limit theorem, \citet{Aue2017} derives the following result.
 \begin{corollary}
+\label{SecondCollaryModelSection}
     \begin{enumerate}[label=(\Roman*)]
         \item
         \label{FGARCH11CLTCondition}
@@ -283,19 +334,19 @@ Unlike in the scalar version of the GARCH model proving geometric ergodicity and
         \item From \labelcref{FGARCH11CLTCondition}, it follows that $(\sigma_i^2(t);i\in\mathbb{Z})$ and $(y_i(t);i\in \mathbb{Z})$ are weakly dependent processes.
     \end{enumerate}
 \end{corollary}
-\labelcref{FGARCH11CLTCondition} is known as geometric $L^2$-m-approximibility. $L^p$-m-approximability for functional data was first introduced by \citet{Lpmapproxibility}. A process that is geometrically $L^p$-m-approximable can be approximated by an m-dependent process at a geometric rate. A stochastic process $(X_n)$ is called m-dependent if observations that are more than $m$ time steps apart are independent. More precisely, for any time index $k$, the collection of random variables $\left\{X_n:n\leq k \right\}$ is independent of the collection $\left\{X_n:n\geq k+m \right\}$. In other words, the past up to time $k$ has no influence on the future starting from time $k+m$. Formally, $X_n$ is m-dependent if, for any integer $k$, the $\sigma$-algebra $\mathcal{F}_k^-=\sigma\left\{...,X_{k-2},X_{k-1,X_k} \right\}$ generated by the past observations is independent of the $\sigma$-algebra generated by the future observations $\mathcal{F}_{k+m}^+=\sigma\left\{ X_{k+m},X_{k+m+1},X_{k+m+2},... \right\}$. \citet{Lpmapproxibility} use the concept of $L^p$-m-approximability to
+\labelcref{FGARCH11CLTCondition} is known as geometric $L^2$-m-approximibility. $L^p$-m-approximability for functional data was first introduced by \citet{Lpmapproxibility}. A process that is geometrically $L^p$-m-approximable can be approximated by an m-dependent process at a geometric rate. A stochastic process $(X_n)$ is called m-dependent if observations that are more than $m$ time steps apart are independent. More precisely, for any time index $k$, the collection of random variables $\left\{X_n:n\leq k \right\}$ is independent of the collection $\left\{X_n:n\geq k+m \right\}$. In other words, the past up to time $k$ has no influence on the future starting from time $k+m$. Formally, $X_n$ is m-dependent if, for any integer $k$, the $\sigma$-algebra $\mathcal{F}_k^-=\sigma\left\{...,X_{k-2},X_{k-1,X_k} \right\}$ generated by the past observations is independent of the $\sigma$-algebra generated by the future observations $\mathcal{F}_{k+m}^+=\sigma\left\{ X_{k+m},X_{k+m+1},X_{k+m+2},... \right\}$. \citet{Lpmapproxibility} use the concept of $L^p$-m-approximability to show that 
 \subsection{Estimation}
 \label{subsec:FGARCHEstimation}
-\begin{itemize}
-    \item Projection onto finite dimensional basis
-    \item Least Squares Minimization problem
-    \item Solving Least Squares (Connection to uni-/ multivariate GARCH models)
-    \item Asymptotic results
-    \item (Quasi-Maximum Likelihood Estimation?)
-\end{itemize}
-%In this next section, the estimation of a functional GARCH(1,1) model will be discussed. To this end, it is assumed that there exists a finite sample of $N$ observed functions $(y_i(t))_{i\in[1,N]}$. In practice, functional objects are typically observed on a fine grid, however, here it is assumed that the functional objects themselves are observed or can be retrieved from the data.\\ My Version before refining with ChatGPT.
-In the following section, I address the estimation of a functional GARCH(1,1) model. I consider a setting in which a finite sample of $N$ functional observations $\{y_i(t)\}_{i=1}^N$ is available. Although functional data are commonly recorded on a dense discrete grid in practical applications, I assume here that the underlying functional forms are directly observed or can be reliably reconstructed from the data.\\
-Because the objects to be estimated are infinite-dimensional, estimating them directly from a finite sample typically leads to unstable, noisy, and hard-to-interpret results. For this reason, \citet{Aue2017} impose a standard finite-dimensional approximation on the intercept function $\delta(t)$ and on the integral operators $\alpha$ and $\beta$. In particular, they assume that all three objects can be approximated using a fixed number $M$ of orthonormal basis functions $\Phi_M = \{\varphi_1(t), \ldots, \varphi_M(t)\}$ defined on $[0,1]$. Under this assumption, $\delta(t)$ is represented as a finite linear combination of these basis functions, while the operators $\alpha$ and $\beta$ are represented through their kernel functions using the same basis:
+%\begin{itemize}
+%    \item Projection onto finite dimensional basis
+%    \item Least Squares Minimization problem
+%    \item Solving Least Squares (Connection to uni-/ multivariate GARCH models)
+%    \item Asymptotic results
+%    \item (Quasi-Maximum Likelihood Estimation?)
+%\end{itemize}
+%In this next section, the estimation of a FGARCH(1,1) model will be discussed. To this end, it is assumed that there exists a finite sample of $N$ observed functions $(y_i(t))_{i\in[1,N]}$. In practice, functional objects are typically observed on a fine grid, however, here it is assumed that the functional objects themselves are observed or can be retrieved from the data.\\ My Version before refining with ChatGPT.
+In this section, the estimation of an FGARCH(1,1) model will be discussed. I consider a setting in which a finite sample of $N$ functional observations $\{y_i(t)\}_{i=1}^N$ is available. Although functional data are commonly recorded on a dense discrete grid in practical applications, I assume here that the underlying curves are directly observed or can be reliably reconstructed from the data.\\
+Because the objects to be estimated are infinite-dimensional, direct estimation from a finite sample is generally ill-posed and therefore requires some form of dimension reduction. For this reason, \citet{Aue2017} impose a standard finite-dimensional approximation on the intercept function $\delta(t)$ and on the integral operators $\alpha$ and $\beta$. In particular, they assume that all three objects can be approximated using a fixed number $M$ of orthonormal basis functions $\Phi_M = \{\varphi_1(t), \ldots, \varphi_M(t)\}$ defined on $[0,1]$. Under this assumption, $\delta(t)$ is represented as a finite linear combination of these basis functions, while the operators $\alpha$ and $\beta$ are represented through their kernel functions using the same basis:
 \begin{align}
 \label{basisdecompositiondelta}
     \delta(t) &= \sum_{m=1}^M d_m \varphi_m(t), \\
@@ -322,37 +373,37 @@ From this representation, it is easy to see that estimating the functional objec
         b_{M,1} & \ldots & b_{M,M}
     \end{pmatrix}
 \end{align}
-To estimate $d$, $A$, and $B$, it is necessary to project $(y_i(t)^2)_{i\in[1,N]}$ and $(\sigma_i(t))_{i\in[1,N]}$ onto $\Phi_M$ and define the m-dimensional vectors $\mathbf{y}_i^{(2)}=\begin{pmatrix}
+To estimate $\mathbf{d}$, $\mathbf{A}$, and $\mathbf{B}$, the squared observations $(y_i^2(t))_{i\in[1,N]}$ and conditional volatility functions $(\sigma_i^2(t))_{i\in[1,N]}$ are projected onto $\Phi_M$. This yields the M-dimensional vectors $\mathbf{y}_i^{(2)}=\begin{pmatrix}
     y_{i,1}^{(2)} & \ldots & y_{i,M}^{(2)}
 \end{pmatrix}^\top$ and $\mathbf{s}_i^{(2)}=\begin{pmatrix}
     s_{i,1}^{(2)} & \ldots & s_{i,M}^{(2)}
-\end{pmatrix}^\top$ where their elements are the result of the inner product with the elements of $\Phi_M$ $y_{i,m}^{(2)}=\langle y_i(t),\varphi_m(t)\rangle$. This leads to the following equation that expresses the projected components of the volatility equation of the FGARCH(1,1) model in matrix form
+\end{pmatrix}^\top$ whose components are given by the inner products with the basis functions in $\Phi_M$ $y_{i,m}^{(2)}=\langle y_i^2(t),\varphi_m(t)\rangle$, $s_{i,m}^{(2)}=\langle \sigma_i^2(t),\varphi_m(t)\rangle$. Under the finite-dimensional parametrisation introduced above, the volatility recursion can then be written in terms of the projected coefficient vectors as
 \begin{align}
 \label{FGARCH11MatrixForm}
-    s_i^{(2)}=\mathbf{d}+\mathbf{Ay_{i-1}^{(2)}}+\mathbf{Bs_{i-1}^{(2)}}.
+    \mathbf{s}_i^{(2)}=\mathbf{d}+\mathbf{Ay}_{i-1}^{(2)}+\mathbf{Bs}_{i-1}^{(2)}.
 \end{align}
-Next, note that this equation can be solved recursively to end up with an equation for $ s_i^{(2)}$ that only depends on $y_{i}^{(2)}$
+Solving this equation recursively obtains an infinite-order representation for $\mathbf{s}_i^{(2)}$ that only depends on $\mathbf{y}_{i}^{(2)}$
 \begin{align}
 \label{Matrixrepinftrealparameters}
-    s_i^{(2)}=\sum_{\ell=1}^{\infty} \mathbf{B}^{\ell-1}\mathbf{d}+\sum_{\ell=1}^{\infty}\mathbf{B}^{\ell-1}\mathbf{Ay}_{i-\ell}^{(2)}.
+    \mathbf{s}_i^{(2)}=\sum_{\ell=1}^{\infty} \mathbf{B}^{\ell-1}\mathbf{d}+\sum_{\ell=1}^{\infty}\mathbf{B}^{\ell-1}\mathbf{Ay}_{i-\ell}^{(2)}.
 \end{align}
-Since the true parameters $\theta=(\mathbf{d}^{\top},\mathbf{A}^\top,\mathbf{B}^\top)^\top$ are unknown, \labelcref{Matrixrepinftrealparameters} can be expressed more generally
+Since the true parameter vector $\mathbf{\theta}=(\mathbf{d}^{\top},\mathbf{A}^\top,\mathbf{B}^\top)^\top$ is unknown, \labelcref{Matrixrepinftrealparameters} is expressed at an arbitrary parameter value $\mathbf{\underline{\theta}}=(\underline{\mathbf{d}}^{\top},\underline{\mathbf{A}}^\top,\underline{\mathbf{B}}^\top)^\top\in\mathbf{\Theta}\subset\mathbb{R}^{M+2M^2}$
 \begin{align}
-    \tilde{s}_i^{(2)}=\tilde{s}_i^{(2)}(\underline{\theta})=\sum_{\ell=1}^{\infty}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{d}}+\sum_{\ell=1}^{\infty}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{A}}\mathbf{y}_{i-\ell}^{(2)}.
+    \mathbf{\tilde{s}}_i^{(2)}=\mathbf{\tilde{s}}_i^{(2)}(\underline{\theta})=\sum_{\ell=1}^{\infty}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{d}}+\sum_{\ell=1}^{\infty}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{A}}\mathbf{y}_{i-\ell}^{(2)}.
 \end{align}
-Here, $\underline{\theta}=(\underline{\mathbf{d}}^{\top},\underline{\mathbf{A}}^\top,\underline{\mathbf{B}}^\top)^\top$ is an element of the parameter space $\mathbf{\Theta}\subset\mathbb{R}^{M+2M^2}$. Since in practice only a finite time frame of the series can be observed, $s_i^{(2)}$ is approximated by $\hat{s}_i^{(2)}$
+Since in practice only a finite time frame of the series can be observed, $\mathbf{s}_i^{(2)}$ is approximated by $\mathbf{\hat{s}}_i^{(2)}$
 \begin{align}
-    \hat{s}_i^{(2)}=\hat{s}_i^{(2)}(\underline{\theta})=\sum_{\ell=1}^{i-1}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{d}}+\sum_{\ell=1}^{i-1}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{A}}\mathbf{y}_{i-\ell}^{(2)}.
+    \mathbf{\hat{s}}_i^{(2)}=\mathbf{\hat{s}}_i^{(2)}(\underline{\theta})=\sum_{\ell=1}^{i-1}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{d}}+\sum_{\ell=1}^{i-1}\underline{\mathbf{B}}^{\ell-1}\underline{\mathbf{A}}\mathbf{y}_{i-\ell}^{(2)}.
 \end{align}
-The goal of any objective function, thus, has to be to find $\underline{\hat{\theta}}_n$ such that $\hat{s}_i^{(2)}$ is close to $s_i^{(2)}$. Since $s_i^{(2)}$ is unobservable, \citet{Aue2017} impose
+The objective, thus, has to be to choose an estimator $\mathbf{\underline{\hat{\theta}}}_n$ such that $\mathbf{\hat{s}}_i^{(2)}$ is close to $\mathbf{s}_i^{(2)}$. Since $\mathbf{s}_i^{(2)}$ is unobservable, \citet{Aue2017} impose
 \begin{gather}
 \label{UnitVarianceepsilonfunction}
     \mathbb{E}[\varepsilon_i^2(t)]=1; \quad \forall t\in[0,1].
 \end{gather}
-This is without loss of generality since this condition can always be fulfilled by an appropriate way of scaling. Under this condition, $\mathbb{E}[s_i^{(2)}|\mathcal{F}_{i-1}]=y_i^{(2)}$ where $\mathcal{F}_{i-1}$ is the sigma-algebra generated by all $\varepsilon_\ell:\ell<i$, $\mathcal{F}_{i-1}=\sigma(\varepsilon_\ell:\ell<i)$. As a consequence, \citet{Aue2017} define the following least squares estimator
+This is without loss of generality since this condition can always be fulfilled by an appropriate way of scaling. Under this condition, $\mathbb{E}[y_i^{2}(t)|\mathcal{F}_{i-1}]=\sigma_i^{2(t)}$ and therefore, after projection onto $\Phi_M$, $\mathbb{E}[y_i^{(2)}|\mathcal{F}_{i-1}]=s_i^{(2)}$ where $\mathcal{F}_{i-1}$ is the sigma-algebra generated by all $\varepsilon_\ell:\ell<i$, $\mathcal{F}_{i-1}=\sigma(\varepsilon_\ell:\ell<i)$. As a consequence, \citet{Aue2017} define the following least squares estimator
 \begin{align}
 \label{ObjectiveFunctionLSFGARCH}
-    \underline{\hat{\theta}}_n=argmin\{S_n(\underline{\theta})=\sum_{i=2}^n\{y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta}) \}^{\top}\{y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta}) \}:\underline{\theta}\in\mathbf{\Theta}\}.
+    \underline{\hat{\theta}}_n=\arg \min\{S_n(\underline{\theta})=\sum_{i=2}^n\{y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta}) \}^{\top}\{y_i^{(2)}-\hat{s}_i^{(2)}(\underline{\theta}) \}:\underline{\theta}\in\mathbf{\Theta}\}.
 \end{align}
 In the following, I will discuss the strong consistency and asymptotic distribution of the least-squares estimator $ \underline{\hat{\theta}}_n$.\\
 To prove the strong consistency and asymptotic normality of the estimator, the following Assumption is needed.
@@ -362,15 +413,15 @@ To prove the strong consistency and asymptotic normality of the estimator, the f
     \begin{enumerate}[label=(A\arabic*)]
         \item $\mathbf{y}_1^{(2)}$ is not measurable with respect to $\mathcal{F}_0$,
         \item $\mathbf{\Theta}$ is a compact set and $\theta$ is in the interior of $\mathbf{\Theta}$ and
-        \label{Ainvertibility}
         \item there are $0<c_1$ and $c_2<1$ such that $c_1\leq \left|\det(\underline{\mathbf{A}})\right|$ and $\left\| \mathbf{B} \right\|<1$ for all $\underline{\theta}=(\underline{\mathbf{d}}^\top,\underline{\mathbf{A}}^\top,\underline{\mathbf{B}}^\top)\in\mathbf{\Theta}$.
+        \label{Ainvertibility}
     \end{enumerate}
 \end{assumption}
 The first part of the assumption rules out trivial predictability of $y_1^{(2)}$ from its past. The second and third parts impose standard regularity conditions on the parameter space. \labelcref{Ainvertibility} also implies that $A$ is non-singular and thus invertible.\\
 Using this assumption, the strong consistency of $\underline{\hat{\theta}}_n$ is established in the following Theorem.
 \begin{theorem}
 \label{StrongConstistencyFGARCH11}
-    Assume that $(y_i(t);i\in\mathbb{Z})$ follows a Functional GARCH(1,1) process as defined in \labelcref{FunctionalGARCH11} and \labelcref{FunctionalGARCH11volatility}), that $\delta(t)$ is a non-negative function, and $\alpha$ and $\beta$ are integral operators that map non-negative functions to non-negative functions, that \labelcref{FGARCH11StationarityMomentsCondition} holds with $\nu=1$, that $\mathbb{E}\left[\left\|\varepsilon_0\right\|_2^2\right]<\infty$, and that \labelcref{UnitVarianceepsilonfunction} holds. Then under \Cref{Assumption1} $\underline{\hat{\theta}}_n$ is strongly consistent, meaning that
+    Assume that $(y_i(t);i\in\mathbb{Z})$ follows a FGARCH(1,1) process as defined in \labelcref{FunctionalGARCH11} and \labelcref{FunctionalGARCH11volatility}), that $\delta(t)$ is a non-negative function, and $\alpha$ and $\beta$ are integral operators that map non-negative functions to non-negative functions, that \labelcref{FGARCH11StationarityMomentsCondition} holds with $\nu=1$, that $\mathbb{E}\left[\left\|\varepsilon_0\right\|_2^2\right]<\infty$, and that \labelcref{UnitVarianceepsilonfunction} holds. Then under \Cref{Assumption1} $\underline{\hat{\theta}}_n$ is strongly consistent, meaning that
     \begin{gather}
         \underline{\hat{\theta}}_n \rightarrow \theta
     \end{gather}
@@ -378,8 +429,8 @@ Using this assumption, the strong consistency of $\underline{\hat{\theta}}_n$ is
 \end{theorem}
 To examine the asymptotic distribution of $\underline{\hat{\theta}}_n$, the following quantities are useful
 \begin{gather}
-    \mathbf{H_0}=\mathbb{E}\left[\frac{\partial \tilde{s}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right], \quad \quad \mathbf{J_0}=\mathbb{E}\left[\left\{y_0^{(2)}-s_0^{(2)}\right\}\left\{y_0^{(2)}-s_0^{(2)}\right\}^\top\right],\\
-    \mathbf{Q_0}=\mathbb{E}\left[\left(\frac{\partial \tilde{s}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right)^\top\left(\frac{\partial \tilde{s}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right)\right].
+    \mathbf{H_0}=\mathbb{E}\left[\frac{\partial \tilde{\mathbf{s}}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right], \quad \quad \mathbf{J_0}=\mathbb{E}\left[\left\{\mathbf{y}^{(2)}-\mathbf{s}_0^{(2)}\right\}\left\{\mathbf{y}^{(2)}-\mathbf{s}_0^{(2)}\right\}^\top\right],\\
+    \mathbf{Q_0}=\mathbb{E}\left[\left(\frac{\partial \tilde{\mathbf{s}}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right)^\top\left(\frac{\partial \tilde{\mathbf{s}}_0^{(2)}(\theta)}{\partial\underline{\theta}}\right)\right].
 \end{gather}
 Under the conditions stated in \Cref{StrongConstistencyFGARCH11}, the matrices $H_0$ and $Q_0$ are well defined. Moreover, if $\mathbb{E}[\left\|\sigma_0^2\right\|_2^4]<\infty$ and $\mathbb{E}[\left\|\varepsilon_0^2\right\|_2^4]<\infty$, the matrix $J_0$ exists. We additionally assume that $Q_0$ is non-singular. The matrix $Q_0$ can be interpreted as the second-moment matrix of the score derivative and, as shown in the Appendix, it is equal to the second derivative of the sample version of $J_0$, the objective function to be minimized. Non-singularity, therefore, guaranties invertibility and ensures that the objective function is locally well behaved.
 \begin{theorem}
@@ -433,12 +484,31 @@ Since $\frac{\partial \hat{Z}_n(\underline{\theta})}{\partial\underline{\theta}}
 
 The asymptotic distribution of $\underline{\hat{\theta}}_n$ therefore depends on the limiting behavior of the score and the Hessian. A uniform law of large numbers yields convergence of the Hessian to $2\mathbf{Q_0}$, while a central limit theorem for orthogonal martingale differences applies to the score evaluated at $\theta$. Combining these results establishes the asymptotic normality stated in \Cref{AsymptoticDistroFGARCH11estimator}. The full proof is deferred to the Appendix.\\
 \citet{Cerovecki2019} derive an alternative estimate based on (pseudo) quasi-maximum likelihood. Applying maximum likelihood techniques to functional data is in general not straightforward since, in general, there is no density function for curves. As a consequence, \citeauthor{Cerovecki2019} also assume that $\delta(t)$, $\alpha$, and $\beta$ can be decomposed into a finite combination of baselines functions similar to (\ref{basisdecompositiondelta}-\ref{basisdecompositionbeta}). Notably, they do not assume that these baseline functions are orthonormal, but rather linear independent and non-negative. They show that under these conditions they arrive at a similar as \labelcref{FGARCH11MatrixForm} which sequentially reduces to a semi-strong multivariate CCC-GARCH model with $R=\mathbb{I}_M$, where $\mathbb{I}_M$ is the identity matrix with dimensions $M\times M$.\\
-They prove the consistency and asymptotic normality of the quasi-maximum likelihood estimator for this semi-strong multivariate CCC-GARCH model. Following this result, they prove the consistency and asymptotic normality of the (pseudo) quasi-maximum likelihood estimator of the Functional GARCH model. The estimator for the Functional GARCH model is then defined as follows.
+They prove the consistency and asymptotic normality of the quasi-maximum likelihood estimator for this semi-strong multivariate CCC-GARCH model. Following this result, they prove the consistency and asymptotic normality of the (pseudo) quasi-maximum likelihood estimator of the FGARCH model. The estimator for the FGARCH model is then defined as follows
 \begin{gather}
+\label{QMLestimationequation}
     \underline{\hat{\theta}}_n= \arg \min_{\theta \in \Theta} \sum_{i=1}^n \tilde{\ell}_i(\theta), \quad \tilde{\ell}_i(\theta)=\sum_{m=1}^M\left\{\frac{\langle y_i^2,\varphi_m\rangle}{\langle \tilde{\sigma}_i^2,\varphi_m\rangle}+\log\langle \tilde{\sigma}_i^2,\varphi_m\rangle \right\},
 \end{gather}
-where the empirical volatility is calculated recursively from\\
-Finally, \citeauthor{Aue2017} discuss the estimation of basis functions. In general, any orthonormal basis can be used as basis functions. Popular choices include B-splines, Fourier bases, and wavelet functions. An alternative approach is to estimate Functional Principal Components from the data and use these as basis functions. 
+where the empirical volatility is calculated recursively as
+\begin{gather}
+    \tilde{\sigma}_i^2=\tilde{\sigma}_i^2(\theta) = \delta+\alpha y_{i-1}^2+ \beta \tilde{\sigma}_{i-1}^2, \quad \text{for }i=1,...,n.
+\end{gather}
+Finally, \citeauthor{Aue2017} discuss the estimation of basis functions. In general, any orthonormal basis can be used as basis functions. Popular choices include B-splines, Fourier bases, and wavelet functions. An alternative approach is to estimate Functional Principal Components from the data and use these as basis functions. To do so, define the covariance kernel of $y_0^2(t)$ as
+\begin{gather}
+    D(t,s) = \text{Cov}(y_0^2(t),y_0^2(s)), \quad s,t\in[0,1].
+\end{gather}
+An estimate of $D(t,s)$ can then  be obtained by
+\begin{gather}
+    \hat{D}(t,s) = \frac{1}{n}\sum_{i=1}^n\{y_i^2(t)-\overline{y}_n^{(2)}(t)\}\{y_i^2(s)-\overline{y}_n^{(2)}(s)\}
+\end{gather}
+where $\overline{y}_n^{(2)}(t)=\frac{1}{n}\sum_{i=1}^ny_i^2(t)$. Using the spectral decomposition of $\hat{D}(t,s)$ the empiricial eigenfunctions $\{\hat{\varphi}_1,...,\hat{\varphi}_M\}$ and eigenvalues $\{\hat{\lambda}_1,...,\hat{\lambda}_M\}$ are obtained. Note that under \labelcref{UnitVarianceepsilonfunction} $\mathbb{E}[y_i^2(t)|\mathcal{F}_{t-1}]=\sigma_i^2(t)$. Since $\sigma_i^2(t)$ under (\ref{basisdecompositiondelta}-\ref{basisdecompositionbeta}) is spanned by $\Phi_M$ it is reasonable to assume that the empirical eigenfunctions $\{\hat{\varphi}_1,...,\hat{\varphi}_M\}$ of $\hat{D}(t,s)$ are a good approximation of $\Phi_M$. \citeauthor{Aue2017} show that if the empirical eigenfunctions are used in place of $\Phi_M$ and $\int\mathbb{E}[y_0^4(t)]dt<\infty$ then \Cref{StrongConstistencyFGARCH11} still holds. This follows from the geometric $L^2$-m-approximability of the FGARCH(1,1) process established in \Cref{SecondCollaryModelSection}.\\
+The same basis functions cannot be used in this exact way when using the quasi-maximum likelihood estimator since the quasi-maximum likelihood requires the basis functions to be non-negative such that the inner products in \labelcref{QMLestimationequation} are positive and thus the minimization problem is well defined and reaches its minimum on the compact set $\Theta$.\\
+As a consequence, \citet{Cerovecki2019} proposes to use any group of non-negative and linear independent functions such as the power basis, exponential basis or some polynomial basis. Alternatively, they develop a data-driven method based on Functional Principal Component Analysis. \citeauthor{Cerovecki2019} propose to shift the eigenvectors obtained through Functional Principal Component Analysis by using the following operation. First, define $\phi_1=1$ and $\phi_2=\mu$. Then, shift the remaining eigenvectors by using 
+\begin{gather}
+    \phi_{m-2}(t) := \varphi_m(t)-\inf_{t\in[0,1]} \varphi_m(t) \wedge 0, \quad \text{for all } m=3,...,M
+\end{gather}
+where $\wedge$ means the minimum operator. This sets the negative part of each eigenvector equal to zero. \citet{Cerovecki2019} finds that these choice performs relatively well in their simulations compared to using the true unobserved basis functions.\\
+Using a set of linear independent functions instead of orthonormal eigenfunctions comes with...
 \subsection{Value-at-risk}
 \label{subsec:ValueAtRisk}
 %\begin{itemize}
@@ -450,39 +520,103 @@ Value-at-risk is intended to specify a limit below which the value of, for examp
     \mathbb{P}(y_i\leq \text{VaR}_i^\tau|\mathcal{F}_{i-1})=\tau.
 \end{gather}
 $\text{VaR}_i^\tau$ here denotes the almost surely unique $\mathcal{F}_{i-1}$-measurable random variable at quantile $\tau$.\\
-From this definition, a few properties of value-at-risk can be inferred. 
-The concept of value-at-risk has been criticized a lot. As a result, extensions to the definition given above have been established. The main points of critic to value-at-risk are...
+From this definition, two important properties of value-at-risk can be inferred. First, value-at-risk is not subadditive, meaning that the sum of the individual value-at-risk of two portfolios is not bigger or equal to the value-of-risk of a portfolio combining the two portfolios. As a consequence, value-at-risk is not a coherent risk measure \citep{Artzner1999}. To see this, think of the following example: Let there be two random variables A and B that are independent of one another. Both A and B have the same distribution function. For both A and B $\mathbb{P}(A|\mathcal{F}_{i-1}=0)=0.95$ ($\mathbb{P}(B|\mathcal{F}_{i-1}=0)=0.95$) and $\mathbb{P}(A|\mathcal{F}_{i-1}=-10)=0.05$ ($\mathbb{P}(B|\mathcal{F}_{i-1}=-10)=0.05$). The value-at-risk for each individual random variable at a confidence level of $\tau=0.05$ is equal to $0$. However, the combined value-at-risk for the two random variables is $-10$. This is because the combined probability $\mathbb{P}(A|\mathcal{F}_{i-1}=0 \land B|\mathcal{F}_{i-1}=0)=0.95 \cdot 0.95 = 0.9025$.\\
+A second property of value-at-risk is that it is insensitive to the underlying distribution of the random variable, and in particular does not account for the behavior of the distribution’s tail.\\
+These two features combined with the usage of value-at-risk as a risk management tool have led to the concept of value-at-risk being heavily criticized. As a result, extensions to value-at-risk have been established. The most important extension to value-at-risk is Expected Shortfall or Conditional value-at-risk. Expected shortfall is defined as follows
+\begin{gather}
+    ES_i^\tau(t)= \mathbb{E}[y_i(t)|\mathcal{F}_{i-1},y_i(t)<VaR_i^\tau(t)].
+\end{gather}
+Expected Shortfall is subadditive and takes the tails of the distribution into consideration. Therefore, Expected Shortfalls addresses the two main theoretical issues of value-at-risk. \citet{RICE20201023} also considers expected shortfall in the appendix of their paper. They show that the method explained in \Cref{sec:Simulation} can easily be extended to the concept of Expected Shortfall.
 \section{Simulation Study}
 \label{sec:Simulation}
 %\begin{itemize}
 %    \item Explain bootstrapping and Probability scoring measures
 %\end{itemize}
-In the next section, I will explore the finite sample properties of the Functional GARCH model and highlight a few practical considerations that have to be made when using the Functional GARCH model for forecasting intra-day value-at-risk in practice.\\
+In the next section, I will explore the finite sample properties of the FGARCH model and highlight a few practical considerations that have to be made when using the FGARCH model for forecasting intra-day value-at-risk in practice.\\
 First, it should be emphasized that functional data are, in practice, observed on a finite grid. Consequently, both the properties discussed in \Cref{subsec:FGARCHModel} and the estimation procedure described in \Cref{subsec:FGARCHEstimation} are implemented in a discretized framework. This discretization does not yield a purely multivariate GARCH model; rather, it leads to a finite-dimensional approximation of the underlying functional model. In particular, operations defined in the functional setting—such as integrals in inner products—must be approximated numerically, which requires explicit consideration of the grid structure and the distances between adjacent grid points. For all simulations, functional data are approximated on an equidistant grid between $[0,1]$ with 200 grid points.\\
-Second, to forecast value-at-risk, an appropriate method has to be used to approximate the pointwise distribution of the innovation process $\varepsilon_i(t)$. Then the value-at-risk forecast is equal to $\hat{\sigma}_i(t)\hat{\varepsilon}_i^\tau(t)$ where $\hat{\sigma}_i(t)$ is the forecasted value of $\sigma_i(t)$ using the fitted Functional GARCH model and $\hat{\varepsilon}_i^\tau(t)$ is the estimated $\tau$ quantile of $\varepsilon_i(t)$. To estimate $\hat{\varepsilon}_i^\tau(t)$ \citet{RICE20201023} propose three methods. For the first method, \citeauthor{RICE20201023} impose that $\varepsilon_i(t)$ follows a Ornstein-Uhlenbeck process. The second method estimates $\hat{\varepsilon}_i^\tau(t)$ using a bootstrap algorithm. Method three utilizes extreme value theory to better model the tails of the distribution. I will focus on the second method since it performed the best in practice \citep{RICE20201023}.\\
+Second, to forecast value-at-risk, an appropriate method has to be used to approximate the pointwise distribution of the innovation process $\varepsilon_i(t)$. Then the value-at-risk forecast is equal to $\hat{\sigma}_i(t)\hat{\varepsilon}_i^\tau(t)$ where $\hat{\sigma}_i(t)$ is the forecasted value of $\sigma_i(t)$ using the fitted FGARCH model and $\hat{\varepsilon}_i^\tau(t)$ is the estimated $\tau$ quantile of $\varepsilon_i(t)$. To estimate $\hat{\varepsilon}_i^\tau(t)$ \citet{RICE20201023} propose three methods. For the first method, \citeauthor{RICE20201023} impose that $\varepsilon_i(t)$ follows a Ornstein-Uhlenbeck process. The second method estimates $\hat{\varepsilon}_i^\tau(t)$ using a bootstrap algorithm. Method three utilizes extreme value theory to better model the tails of the distribution. I will focus on the second method since it performed the best in practice \citep{RICE20201023}.\\
 To obtain $\hat{\varepsilon}_i^\tau(t)$ using the bootstrap algorithm first the fitted $\hat{\sigma}_i(t)$ needs to be computed. Next, $\hat{\varepsilon}_i(t)$ is calculated by $\hat{\varepsilon}_i(t)=\frac{y_i(t)}{\hat{\sigma}_i(t)}$. Finally, to get $\hat{\varepsilon}_i^\tau(t)$ the estimated error terms are resampled $B$ many times with replacement. $\hat{\varepsilon}_i^\tau(t)$ is then equal to the pointwise $\tau$-quantile of $(\hat{\varepsilon}_i^{(b)}(t))_{b\in[1,B]}$.\\
-Thirdly, to properly evaluate the results of the functional GARCH model I will employ two statistical tests.
+Third, to properly evaluate the results of the forecasts I will employ two statistical tests
 \subsection{Simulation 1}
 \label{subsec:Simulation1}
-\begin{itemize}
-    \item Similar to Aue et al. Show simulation where the method works.
-\end{itemize}
+%\begin{itemize}
+%    \item Similar to Aue et al. Show simulation where the method works.
+%\end{itemize}
+For the first simulation, a setup similar to \citet{Aue2017} and \citet{Cerovecki2019} is chosen. Set $\alpha(t,s)=\beta(t,s)=12t(1-t)s(1-s)$ and $\delta(t)=0.01$. \citet{Aue2017} and \citet{Cerovecki2019} both then define the error functions $\varepsilon_i(t)$ to follow a Ornstein-Uhlenbeck-type process. \citet{Cerovecki2019} then shows that under this setting, their (pseudo-) quasi-maximum likelihood estimator outperforms the least-squares estimator by \citet{Aue2017}. Ornstein-Uhlenbeck processes possess Gaussian increments that can be questioned for financial data that is known to have heavy tails. To test the results obtained in \citet{Cerovecki2019} using an alternative specification for the random innovation functions, I use the following specification for all $\varepsilon_i(t)$ 
 \begin{align}
-    \varepsilon_i(t)=\frac{\sqrt{\log2}}{2^{200t}}\cdot B_i \left( \frac{2^{400t}}{\log2}\right); (B_i:i\in \mathbb{Z})
+    \varepsilon_i(t) = e^{-\frac{t}{2}}T_i^\nu(e^t).
 \end{align}
+Here, $T_i^\nu$ denotes a Lévy process with increments with heavy tails approximating a Student-t distribution. $\nu$ denotes the typical degrees of freedom set for a standard Student-t distribution. The variance of the increments is scaled by $\frac{\nu-2}{\nu}$ to ensure that \labelcref{UnitVarianceepsilonfunction} holds. The simulations were ran for three values of $\nu=\{5,10,25 \}$. In addition, three sample sizes were considered for the simulations to test the effect of larger samples.\\
+Under the setup described above the optimal value for $d$
+\begin{table}[ht]
+\centering
+\caption{Mean bias and standard deviation of estimators for LS}
+\begin{tabular}{c ccc ccc ccc}
+\toprule
+\multirow{2}{*}{Sample size} & \multicolumn{3}{c}{$\nu = 5$} & \multicolumn{3}{c}{$\nu = 10$} & \multicolumn{3}{c}{$\nu = 25$} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+& $d$ & $a$ & $b$ & $d$ & $a$ & $b$ & $d$ & $a$ & $b$ \\
+\midrule
+250 & \makecell[c]{.0076 \\[-2pt] (.0094)} & \makecell[c]{-.1103 \\[-2pt] (.1309)} & \makecell[c]{-.0633 \\[-2pt] (.2583)} & \makecell[c]{.0051 \\[-2pt] (.0072)} & \makecell[c]{-.0963 \\[-2pt] (.1422)} & \makecell[c]{-.0484 \\[-2pt] (.2233)} & \makecell[c]{.0055 \\[-2pt] (.0071)} & \makecell[c]{-.0933 \\[-2pt] (.1271)} & \makecell[c]{-.0407 \\[-2pt] (.2298)} \\
+500 & \makecell[c]{.0042 \\[-2pt] (.0072)} & \makecell[c]{-.0996 \\[-2pt] (.1178)} & \makecell[c]{.0021 \\[-2pt] (.2163)} & \makecell[c]{.0034 \\[-2pt] (.0046)} & \makecell[c]{-.0866 \\[-2pt] (.1053)} & \makecell[c]{-.0099 \\[-2pt] (.1712)} & \makecell[c]{.0050 \\[-2pt] (.0064)} & \makecell[c]{-.0593 \\[-2pt] (.1127)} & \makecell[c]{-.0507 \\[-2pt] (.1921)} \\
+1000 & \makecell[c]{.0042 \\[-2pt] (.0066)} & \makecell[c]{-.0904 \\[-2pt] (.1049)} & \makecell[c]{-.0068 \\[-2pt] (.1926)} & \makecell[c]{.0024 \\[-2pt] (.0039)} & \makecell[c]{-.0840 \\[-2pt] (.0817)} & \makecell[c]{.0260 \\[-2pt] (.1416)} & \makecell[c]{.0027 \\[-2pt] (.0044)} & \makecell[c]{-.0646 \\[-2pt] (.0877)} & \makecell[c]{.0000 \\[-2pt] (.1457)} \\
+\bottomrule
+\end{tabular}
+\end{table}
 \subsection{Simulation 2}
 \label{subsec:Simulation2}
-\begin{itemize}
-    \item Simulation 2 should demonstrate some of the weaknesses from the fGARCH model either by violating one of its assumptions or/and by giving reasons why the fGARCH model should be extended in some type of way (transition to fGARCH-X or fGARCH with multiple constant parameters or similar)
-\end{itemize}
+%\begin{itemize}
+    %\item Simulation 2 should demonstrate some of the weaknesses from the fGARCH model either by violating one of its assumptions or/and by giving reasons why the fGARCH model should be extended in some type of way (transition to fGARCH-X or fGARCH with multiple constant parameters or similar)
+%\end{itemize}
+\begin{table}[ht]
+\centering
+\caption{p-value for LS-estimation by number of principal components, parameter $\nu$, and quantile}
+\begin{tabular}{c ccc ccc ccc}
+\toprule
+\multirow{2}{*}{Number of PCs}
+& \multicolumn{3}{c}{$\nu = 5$}
+& \multicolumn{3}{c}{$\nu = 10$}
+& \multicolumn{3}{c}{$\nu = 25$} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+& $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$
+& $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$
+& $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$ \\
+\midrule
+3 &  &  &  &  &  &  &  &  &  \\
+5 &  &  &  &  &  &  &  &  &  \\
+7 &  &  &  &  &  &  &  &  &  \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{table}[ht]
+\centering
+\caption{p-value for QML-estimation by number of principal components, parameter $\nu$, and quantile}
+\begin{tabular}{c ccc ccc ccc}
+\toprule
+\multirow{2}{*}{Number of PCs}
+& \multicolumn{3}{c}{$\nu = 5$}
+& \multicolumn{3}{c}{$\nu = 10$}
+& \multicolumn{3}{c}{$\nu = 25$} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+& $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$
+& $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$
+& $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$ \\
+\midrule
+3 &  &  &  &  &  &  &  &  &  \\
+5 &  &  &  &  &  &  &  &  &  \\
+7 &  &  &  &  &  &  &  &  &  \\
+\bottomrule
+\end{tabular}
+\end{table}
 \section{Discussion}
 \label{sec:Discussion}
-\begin{itemize}
-    \item Summarize thesis
-    \item list possible extensions and literature that has already extended FGARCH
-    \item (Give outlook on future of risk measures? (Expected Shortfall?))
-\end{itemize}
-In this thesis, I have presented the Functional GARCH model and
+%\begin{itemize}
+%    \item Summarize thesis
+%    \item list possible extensions and literature that has already extended FGARCH
+%    \item (Give outlook on future of risk measures? (Expected Shortfall?))
+%\end{itemize}
+In this thesis, the FGARCH model was presented and conditions for a stationary solution were discussed. Furthermore,  Following that two estimation procedures were established and their finite sample performance was investigated using Monte Carlo Simulations.
+There are several directions in which the results of this thesis can be extended. As mentioned in \Cref{subsec:FGARCHEstimation}, \citet{Kuehnert2020} proposes an alternative estimator for the FGARCH model based on yule-walker equations.
 \newpage
 {\setstretch{0.6}
 \bibliographystyle{agsm}
@@ -493,10 +627,29 @@ In this thesis, I have presented the Functional GARCH model and
 \section{Appendix}
 \label{sec:Appendix}
 %\renewcommand{\thesubsection}{\Alph{subsection}}
-\subsection{Proofs of Section 2.1}
-\begin{align}
-    \varepsilon_i(t) = e^{-\frac{t}{2}}W_i(e^t)
-\end{align}
+\subsection{Results of Section 2.1}
+\subsubsection{Ergodicity}
+This definition is taken from \citet{francq2019garch}.
+\begin{definition}[Ergodic stationary process]
+    A real valued strictly stationary process $(Z_i)_{i\in\mathbb{Z}}$ is said to be ergodic if and only if, for any Borel set $B$ and any integer $k$,
+    \begin{gather}
+        \frac{1}{n}\sum_{i=1}^n  \mathbb{1}_B(Z_i,Z_{i+1},...,Z_{i+k})\rightarrow \mathbb{P}[(Z_1,...,Z_{1+k})\in B]
+    \end{gather}
+    with probability 1.
+\end{definition}
+It should be noted that the concept of ergodicity is much more general and can be extended to non-stationary sequences (see, for example, \citet{billingsley1995probability}).\\
+The ergodic theorem applied to stationary sequences states the following.
+\begin{theorem}[The ergodic theorem for stationary sequences]
+    If $(Z_i)_{i\in\mathbb{Z}}$ is strictly stationary and ergodic, if $f$ is measurable and if 
+    \begin{gather}
+        \mathbb{E}|f(...,Z_{i-1},Z_i,Z_{i+1},...)|<\infty
+    \end{gather}
+    then
+    \begin{gather}
+        \frac{1}{n}\sum_{i=1}^n f(...,Z_{i-1},Z_i,Z_{i+1},...)\rightarrow\mathbb{E}[f(...,Z_{i-1},Z_i,Z_{i+1},...)]\quad a.s.
+    \end{gather}
+\end{theorem}
+\subsubsection[Proof of Theorem 2.1]{Proof of \Cref{stationarityscalarGARCH11}}
 Let $\sum a_n$ be a series with non-negative terms and let $\lambda = \varlimsup a_n^{1/n}$. Then (i) if $\lambda<1$ the series $\sum a_n$ converges, (ii) if $\lambda>1$ the series $\sum a_n$ diverges.
 \subsection{Proofs of Section 2.2}
 \begin{align}
