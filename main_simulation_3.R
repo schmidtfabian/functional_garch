@@ -8,6 +8,8 @@ rm(list=ls())
 install.packages(setdiff(c("rstudioapi","ggplot2", "dplyr", "tidyr", "nloptr"),
                          rownames(installed.packages())))
 library(ggplot2)
+library(tidyr)
+library(dplyr)
 
 file_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
 
@@ -30,23 +32,29 @@ source_dir <- function(path) {
 
 source_dir("R")
 
-set.seed(9372)
-N_sim <- 100
+N_sim <- 5
 quantiles_VAR <- c(0.025,0.01,0.005)
-deviation_VAR <- test1 <- test2 <- matrix(NA, N_sim, 3*length(quantiles_VAR))
-deviation_parameters <- matrix(NA, N_sim, 9)
+set.seed(9372)
+nu_vec = c(5,10)
+PC_vec = c(1,3)
+deviation_VAR <- test1 <- test2 <- array(NA, dim = c(N_sim, length(nu_vec),
+                                                     length(PC_vec),2,length(quantiles_VAR)))
+deviation_parameters <- array(NA, dim = c(N_sim, length(nu_vec),
+                                          length(PC_vec),2,3))
+
+#### Setup ####
+size_burn_in_sample <- 1000
+size_training_sample <- 1000
+size_eval_sample <- 200
+
+T_grid_points <- 100
+t_difference <- 1/(T_grid_points-1)
+
+Bootstrap_samples <- 10000
 
 for (i in 1:N_sim) {
-  #### Setup Simulation ####
-  size_burn_in_sample <- 1000
-  size_training_sample <- 1000
-  size_eval_sample <- 200
-  
-  T_grid_points <- 100
-  t_difference <- 1/(T_grid_points+1)
-  
   #### Simulation ####
-  simulation2 <- simulate_fgarch_2(size_burn_in_sample,size_training_sample,
+  simulation2 <- simulate_fgarch_3(size_burn_in_sample,size_training_sample,
                                    size_eval_sample,T_grid_points,
                                    epsilon_function = epsilon_function_t_ou,
                                    nu = 5
@@ -65,44 +73,69 @@ for (i in 1:N_sim) {
   
   #### Functional Principal Components ####
   
-  fpca_results <- baseline_compute(y_matrix_squared)
+  fpca_results <- fpca_compute(y_matrix_squared)
   
-  PC_matrix_qml <- as.matrix(fpca_results$eigenvectors[,1:2])
-  PC_matrix_qml <- cbind(colMeans(y_matrix_squared),PC_matrix_qml)
-  PC_matrix_qml <- cbind(rep(1,T_grid_points),PC_matrix_qml)
+  PC_matrix_ls <- as.matrix(fpca_results$eigenvectors[,1:5])
+  
+  baseline_results <- baseline_compute(y_matrix_squared)
+  PC_matrix_qml <- as.matrix(baseline_results$eigenvectors[,1:3])
+  PC_matrix_qml <- cbind(rep(1,T_grid_points),colMeans(y_matrix_squared),PC_matrix_qml)
   
   #### FGARCH estimation ####
-  fgarch_estimates <- fgarch_est_qml(y_matrix_squared, PC_matrix_qml)
   
-  estimate_delta <- as.vector(fgarch_estimates$delta)
-  estimate_alpha <- fgarch_estimates$alpha
-  estimate_beta <- fgarch_estimates$beta
+  fgarch_estimates_ls <- fgarch_est_ls(y_matrix_squared,PC_matrix_ls)
+  
+  estimate_delta_ls <- as.vector(fgarch_estimates_ls$delta)
+  estimate_alpha_ls <- fgarch_estimates_ls$alpha
+  estimate_beta_ls <- fgarch_estimates_ls$beta
+  
+  fgarch_estimates_qml <- fgarch_est_qml(y_matrix_squared, PC_matrix_qml)
+  
+  estimate_delta_qml <- as.vector(fgarch_estimates_qml$delta)
+  estimate_alpha_qml <- fgarch_estimates_qml$alpha
+  estimate_beta_qml <- fgarch_estimates_qml$beta
   
   #### Fitted values ####
   
-  fitted_values <- calculate_fitted_values(y_matrix_squared, y_matrix, PC_matrix_qml,
-                                           estimate_delta, estimate_alpha, estimate_beta)
+  fitted_values_ls <- calculate_fitted_values(y_matrix_squared, y_matrix, PC_matrix_ls,
+                                              estimate_delta_ls, estimate_alpha_ls, estimate_beta_ls)
   
-  epsilon_fitted <- fitted_values$epsilon_fitted
-  sigma_fitted <- fitted_values$sigma_fitted
-  alpha_fitted <- fitted_values$alpha
-  beta_fitted <- fitted_values$beta
-  delta_fitted <- fitted_values$delta
+  epsilon_fitted_ls <- fitted_values_ls$epsilon_fitted
+  sigma_fitted_ls <- fitted_values_ls$sigma_fitted
+  alpha_fitted_ls <- fitted_values_ls$alpha
+  beta_fitted_ls <- fitted_values_ls$beta
+  delta_fitted_ls <- fitted_values_ls$delta
+  
+  fitted_values_qml <- calculate_fitted_values(y_matrix_squared, y_matrix, PC_matrix_qml,
+                                               estimate_delta_qml, estimate_alpha_qml, estimate_beta_qml)
+  
+  epsilon_fitted_qml <- fitted_values_qml$epsilon_fitted
+  sigma_fitted_qml <- fitted_values_qml$sigma_fitted
+  alpha_fitted_qml <- fitted_values_qml$alpha
+  beta_fitted_qml <- fitted_values_qml$beta
+  delta_fitted_qml <- fitted_values_qml$delta
   
   #### Bootstrap ####
-  Bootstrap_samples <- 10000
+  quantile_matrix_ls <- calculate_bootstrap(epsilon_fitted_ls,Bootstrap_samples,quantiles_VAR)
+  quantile_matrix_qml <- calculate_bootstrap(epsilon_fitted_qml,Bootstrap_samples,quantiles_VAR)
   
-  quantile_matrix <- calculate_bootstrap(epsilon_fitted,Bootstrap_samples,quantiles_VAR)
-  Forecasts_VAR <- forecast_VAR(y_eval_squared,y_matrix_squared,fitted_values,quantile_matrix)
+  #### Forecasting ####
+  Forecasts_VAR_ls <- forecast_VAR(y_eval_squared,y_matrix_squared,fitted_values_ls,quantile_matrix_ls)
+  Forecasts_VAR_qml <- forecast_VAR(y_eval_squared,y_matrix_squared,fitted_values_qml,quantile_matrix_qml)
   
-  test_VaR <- compute_test_statistic(Forecasts_VAR$VAR_forecast, quantiles_VAR, y_eval)
-  test1[i,1:length(quantiles_VAR)] <- test_VaR$p_value
-  deviation_VAR[i,1:length(quantiles_VAR)] <- test_VaR$total_deviation
+  #### Testing ####
+  test_VaR_ls <- compute_test_statistic(Forecasts_VAR_ls$VAR_forecast, quantiles_VAR, y_eval)
+  test1[q,i,j,1,] <- test_VaR_ls$p_value
+  deviation_VAR[q,i,j,1,] <- test_VaR_ls$total_deviation
+  
+  test_VaR_qml <- compute_test_statistic(Forecasts_VAR_qml$VAR_forecast, quantiles_VAR, y_eval)
+  test1[q,i,j,2,]<- test_VaR_qml$p_value
+  deviation_VAR[q,i,j,2,] <- test_VaR_qml$total_deviation
   
   #### PC-GARCH ####
   
   PCA_pc_garch <- pca_compute(y_matrix)
-  PCs_pc_garch <- PCA_pc_garch$eigenvectors[,1]
+  PCs_pc_garch <- PCA_pc_garch$eigenvectors[,1:3]
   PC_garch_results <- pc_garch_estimate(y_matrix, PCs_pc_garch)
   
   estimate_alpha_pc_garch <- PC_garch_results$alpha
@@ -128,25 +161,40 @@ for (i in 1:N_sim) {
 }
 
 sqrt(sum((alpha_simulation + beta_simulation)^2) * (1/(T_grid_points-1))^2)
-sqrt(sum((alpha_fitted+beta_fitted)^2) * (1/(T_grid_points-1))^2)
-matplot(
-  x = t_grid,
-  y = t(sigma_squared[1500:1505,]),
-  type = "l",
-  lty = 1,
-  col = rainbow(5),
-  xlab = "t",
-  ylab = "f(t)"
+sqrt(sum((alpha_fitted_ls + beta_fitted_ls)^2) * (1/(T_grid_points-1))^2)
+sqrt(sum((alpha_fitted_qml + beta_fitted_qml)^2) * (1/(T_grid_points-1))^2)
+
+# Build data frame
+df_1 <- data.frame(
+  t = t_grid,
+  Actual      = y_eval[100, ],
+  VAR_ls      = Forecasts_VAR_ls$VAR_forecast[1, 100, ],
+  VAR_qml     = Forecasts_VAR_qml$VAR_forecast[1, 100, ],
+  PC_GARCH    = forecasts_pc_GARCH$y_forecast_VAR[1, 100, ]
 )
-matplot(
-  x = t_grid,
-  y = t(sigma_fitted[500:505,]),
-  type = "l",
-  lty = 1,
-  col = rainbow(5),
-  xlab = "t",
-  ylab = "f(t)"
-)
+
+# Convert to long format
+df_1_long <- df_1 %>%
+  pivot_longer(
+    cols = -t,
+    names_to = "Series",
+    values_to = "value"
+  )
+
+# Plot
+ggplot(df_1_long, aes(x = t, y = value,
+                    linetype = Series,
+                    shape = Series)) +
+  geom_line(linewidth = 1, color = "black") +
+  scale_linetype_manual(values = c(
+    "Actual"   = "solid",
+    "VAR_ls"   = "dashed",
+    "VAR_qml"  = "dotted",
+    "PC_GARCH" = "dotdash"
+  )) +
+  labs(x = "t", y = "f(t)", linetype = "Series", shape = "Series") +
+  theme_bw()
+
 
 plot(t_grid, quantile_matrix[3,], type = "l", ylim = c(-10,0), col = "#1B4F72")
 lines(t_grid, quantile_matrix[2,], col = "#BA4A00")
@@ -169,3 +217,29 @@ plot(t_grid,y_eval[103,], type = "l",
 
 lines(t_grid,y_forecast_quantile1[103,], col = "#BA4A00")
 lines(t_grid, y_forecast_pc_garch_quantile1[103,], col = "#2C2C2C")
+
+persp(t_grid, t_grid, alpha_simulation,
+      theta = 30, phi = 30, expand = 0.5,
+      xlab = "s", ylab = "t", zlab = "alpha(s,t)",
+      ticktype = "detailed", main = "Real alpha")
+persp(t_grid, t_grid, alpha_fitted_ls,
+      theta = 30, phi = 30, expand = 0.5,
+      xlab = "s", ylab = "t", zlab = "alpha(s,t)",
+      ticktype = "detailed", main = "Estimated alpha ls")
+persp(t_grid, t_grid, alpha_fitted_qml,
+      theta = 30, phi = 30, expand = 0.5,
+      xlab = "s", ylab = "t", zlab = "alpha(s,t)",
+      ticktype = "detailed", main = "Estimated alpha qml")
+
+persp(t_grid, t_grid, beta_simulation,
+      theta = 30, phi = 30, expand = 0.5,
+      xlab = "s", ylab = "t", zlab = "beta(s,t)",
+      ticktype = "detailed", main = "Real beta")
+persp(t_grid, t_grid, beta_fitted_ls,
+      theta = 30, phi = 30, expand = 0.5,
+      xlab = "s", ylab = "t", zlab = "beta(s,t)",
+      ticktype = "detailed", main = "Estimated beta ls")
+persp(t_grid, t_grid, beta_fitted_qml,
+      theta = 30, phi = 30, expand = 0.5,
+      xlab = "s", ylab = "t", zlab = "beta(s,t)",
+      ticktype = "detailed", main = "Estimated beta qml")

@@ -1,5 +1,8 @@
 compute_test_statistic <- function(y_forecast, quantiles_VAR, y_eval,
-                                   number_of_simulations = 10000) {
+                                   number_of_simulations = 10000,
+                                   delta_sim, alpha_sim, beta_sim,
+                                   delta_est, alpha_est, beta_est,
+                                   compute_msd = TRUE) {
   
   q <- dim(y_forecast)[1]
   n <- dim(y_forecast)[2]
@@ -48,10 +51,21 @@ compute_test_statistic <- function(y_forecast, quantiles_VAR, y_eval,
       quantiles_VAR[i] - mean(indicator_arr[i, , ], na.rm = TRUE)
   }
   
+  if (compute_msd) {
+    msd_delta <- sqrt(sum((delta_est - delta_sim)^2) * dt)
+    msd_alpha <- (dt * RSpectra::svds(alpha_est - alpha_sim, k = 1, nu = 0, nv = 0)$d[1])^2
+    msd_beta  <- (dt * RSpectra::svds(beta_est - beta_sim, k = 1, nu = 0, nv = 0)$d[1])^2
+  } else {
+    msd_delta <- msd_alpha <- msd_beta <- NA_real_
+  }
+  
+  
   return(list(
     test_statistic = test_T_n,
     p_value = p_values,
     total_deviation = total_deviation,
-    mean_indicator = mean_indicator
+    msd_delta = msd_delta,
+    msd_alpha = msd_alpha,
+    msd_beta = msd_beta
   ))
 }

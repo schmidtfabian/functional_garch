@@ -1,5 +1,3 @@
-library(nloptr)
-
 # --------------------------------------------------
 # Function: fgarch_est_qml()
 #
@@ -14,7 +12,7 @@ library(nloptr)
 #   list with estimated delta, alpha, beta and nloptr output
 # --------------------------------------------------
 
-fgarch_est_qml <- function(y_matrix_squared, PC) {
+fgarch_est_qml <- function(y_matrix_squared, PC, maxeval = 1000) {
   
   # --------------------------------------------------
   # Ensure PC is a matrix
@@ -32,6 +30,8 @@ fgarch_est_qml <- function(y_matrix_squared, PC) {
   PC_t <- t(PC) #avoids computing inside of the loop
   PC_dt <- PC*dt
   scores <- y_matrix_squared %*% PC * dt
+  scores <- as.matrix(scores)   # safeguard for M = 1
+  
   n <- nrow(scores)
   M <- ncol(scores)
   
@@ -46,14 +46,16 @@ fgarch_est_qml <- function(y_matrix_squared, PC) {
     alpha_kernel_matrix <- PC %*% A %*% PC_t
     beta_kernel_matrix <- PC %*% B %*% PC_t
     
-    sigma[1, ] <- delta_vector
+    sigma[1, ] <- solve(diag(T) -
+                          (alpha_kernel_matrix + beta_kernel_matrix)*dt)%*% delta_vector
     
     # remaining steps
-    for (i in 2:n) {
-      sigma[i, ] <- delta_vector + alpha_kernel_matrix %*% y[i-1, ] *dt +
-        beta_kernel_matrix %*% sigma[i-1, ] *dt
+    if (n > 1) {
+      for (i in 2:n) {
+        sigma[i, ] <- delta_vector + alpha_kernel_matrix %*% y[i-1, ] *dt +
+          beta_kernel_matrix %*% sigma[i-1, ] *dt
+      }
     }
-    
     return(sigma)
   }
   
@@ -64,21 +66,26 @@ fgarch_est_qml <- function(y_matrix_squared, PC) {
   
   obj_wrapper <- function(params) {
     
-    # Unpack
     delta <- params[1:M]
-    A     <- matrix(params[(M + 1):(M + M^2)], nrow = M, ncol = M)
-    B     <- matrix(params[(M + M^2 + 1):(M + 2 * M^2)], nrow = M, ncol = M)
+    A <- matrix(params[(M + 1):(M + M^2)], nrow = M, ncol = M)
+    B <- matrix(params[(M + M^2 + 1):(M + 2 * M^2)], nrow = M, ncol = M)
     
-    # Calculate Variance
     sigma <- garch_variance(delta, A, B, y_matrix_squared, n, M, T_grid, PC, PC_t)
-    if (any(is.na(sigma)) || any(sigma <= 0)) return(1e10)
+    if (any(is.na(sigma)) || any(!is.finite(sigma))) return(1e10)
     
-    y_trim <- scores[-1, ]
     sigma_scores <- sigma %*% PC_dt
-    sigma_scores_trim <- sigma_scores[-1,]
-    lik <- (y_trim / sigma_scores_trim) + log(sigma_scores_trim)
-    return(mean(rowSums(lik)))
+    sigma_scores <- as.matrix(sigma_scores)   # safeguard for M = 1
     
+    y_trim <- scores[-1, , drop = FALSE]
+    sigma_scores_trim <- sigma_scores[-1, , drop = FALSE]
+    
+    if (any(is.na(sigma_scores_trim)) || any(!is.finite(sigma_scores_trim)) ||
+        any(sigma_scores_trim <= 0)) {
+      return(1e8)
+    }
+    
+    lik <- (y_trim / sigma_scores_trim) + log(sigma_scores_trim)
+    mean(rowSums(lik))
   }
   
   # ------------------------------------------------------------------
@@ -90,7 +97,7 @@ fgarch_est_qml <- function(y_matrix_squared, PC) {
     alpha_kernel_matrix <- PC %*% A %*% PC_t
     beta_kernel_matrix <- PC %*% B %*% PC_t
     norm_operators <- sqrt(sum((alpha_kernel_matrix + beta_kernel_matrix)^2) * dt^2)
-    return(norm_operators - 1)
+    return(norm_operators - 0.9999)
   }
   
   
@@ -102,9 +109,9 @@ fgarch_est_qml <- function(y_matrix_squared, PC) {
   max_norm <- max(norms)
   
   restrict_beta <- 0.99 * (M^2 * max_norm)^(-1)
-  init_delta <- rep(0.01/M, M)
-  init_alpha <- matrix(0.3/M, M,M)
-  init_beta  <- matrix(0.1*restrict_beta, M,M)               
+  init_delta <- c(0.01,rep(0, M-1))
+  init_alpha <- matrix(0, M,M)
+  init_beta  <- matrix(0, M,M)               
   
   # Flatten
   init_theta <- c(init_delta, as.vector(init_alpha), as.vector(init_beta))
@@ -112,16 +119,15 @@ fgarch_est_qml <- function(y_matrix_squared, PC) {
   # ------------------------------------------------------------------
   # Optimization
   # ------------------------------------------------------------------
-  optim_res <- nloptr(
+  optim_res <- nloptr::nloptr(
     x0 = init_theta,
     eval_f = obj_wrapper,
-    lb = c(rep(1e-4,M),rep(0,length(init_theta)-M)),
+    lb = c(1e-4,rep(0,length(init_theta)-1)),
     ub = c(rep(1,M+M^2), rep(restrict_beta,M^2)),
     eval_g_ineq = stationarity_constraint,
     opts = list(
       algorithm = "NLOPT_LN_COBYLA",
-      xtol_rel = 1e-6,
-      maxeval = 1000
+      maxeval = maxeval
     )
   )
   

@@ -53,8 +53,8 @@ simulate_fgarch_1 <- function(
   alpha_kernel_matrix <- outer(t_grid, t_grid, alpha_function)
   beta_kernel_matrix  <- outer(t_grid, t_grid, beta_function)
   
-  sigma_squared_matrix <- matrix(0, N_observations, T_grid_points)
-  y_matrix <- matrix(0, N_observations, T_grid_points)
+  sigma_squared_matrix <- matrix(NA_real_, N_observations, T_grid_points)
+  y_matrix <- matrix(NA_real_, N_observations, T_grid_points)
   
   sigma_squared_matrix[1, ] <- delta_vector
   
@@ -77,11 +77,13 @@ simulate_fgarch_1 <- function(
   # Split samples, discard burn-in
   # --------------------------------------------------
   y_eval <- y_matrix[
-    (burn_in + train_size + 1):(burn_in + train_size + eval_size), 
+    (burn_in + train_size + 1):(burn_in + train_size + eval_size), ,
+    drop = FALSE
   ]
   
   y_train <- y_matrix[
-    (burn_in + 1):(burn_in + train_size), 
+    (burn_in + 1):(burn_in + train_size), ,
+    drop = FALSE
   ]
   
   # --------------------------------------------------

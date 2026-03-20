@@ -1,5 +1,3 @@
-library(nloptr)
-
 # --------------------------------------------------
 # Function: fgarch_est_ls()
 #
@@ -14,7 +12,7 @@ library(nloptr)
 #   list with estimated delta, alpha, beta and nloptr output
 # --------------------------------------------------
 
-fgarch_est_ls <- function(y_matrix_squared, PC, check_points = 40, maxeval = 1000) {
+fgarch_est_ls <- function(y_matrix_squared, PC, maxeval = 1000) {
   
   # --------------------------------------------------
   # Ensure PC is a matrix
@@ -31,19 +29,11 @@ fgarch_est_ls <- function(y_matrix_squared, PC, check_points = 40, maxeval = 100
   
   PC_t <- t(PC) #avoids computing inside of the loop
   PC_dt <- PC*dt
+  K_PC <- kronecker(PC, PC)
   
   scores <- y_matrix_squared %*% PC_dt
   n <- as.numeric(nrow(scores))
   M <- as.numeric(ncol(scores))
-  
-  # select indices for pointwise constraints (sparse)
-  k <- min(as.integer(check_points), T_grid)
-  idx <- unique(as.integer(round(seq(1, T_grid, length.out = k))))
-  
-  # --------------------------------------------------
-  # Parameter vector structure
-  # theta = (delta, vec(alpha), vec(beta))
-  # --------------------------------------------------
   
   # --------------------------------------------------
   # Conditional variance recursion
@@ -52,13 +42,14 @@ fgarch_est_ls <- function(y_matrix_squared, PC, check_points = 40, maxeval = 100
     # we produce s_i for i = 2,...,n  -> total n-1 rows
     sigma <- matrix(NA_real_, nrow = n-1, ncol = M)
     
+    sigma_initial <- solve(diag(M) - A - B) %*% delta
     # first recursion step: corresponds to i = 2
-    sigma[1, ] <- delta + A %*% as.numeric(y[1, ])
+    sigma[1, ] <- delta + A %*% as.numeric(y[1, ]) + B %*% sigma_initial
     
     # remaining steps
-    if (n > 2) {
+    if (n > 1) {
       for (i in 2:(n-1)) {
-        sigma[i, ] <- delta + A %*% as.numeric(y[i-1, ]) + B %*% as.numeric(sigma[i-1, ])
+        sigma[i, ] <- delta + A %*% as.numeric(y[i, ]) + B %*% as.numeric(sigma[i-1, ])
       }
     }
     
@@ -87,26 +78,27 @@ fgarch_est_ls <- function(y_matrix_squared, PC, check_points = 40, maxeval = 100
   
   stationarity_positivity_constraint <- function(params) {
     delta <- params[1:M]
-    A <- matrix(params[(M + 1):(M + M^2)], nrow = M)
-    B <- matrix(params[(M + M^2 + 1):(M + 2*M^2)], nrow = M)
+    Avec  <- params[(M + 1):(M + M^2)]
+    Bvec  <- params[(M + M^2 + 1):(M + 2 * M^2)]
+    
+    A <- matrix(Avec, nrow = M, ncol = M)
+    B <- matrix(Bvec, nrow = M, ncol = M)
     delta_vector <- as.vector(PC%*%delta)
-    alpha_kernel_matrix <- PC %*% A %*% PC_t
-    beta_kernel_matrix <- PC %*% B %*% PC_t
-    norm_operators <- sqrt(sum((alpha_kernel_matrix + beta_kernel_matrix)^2) * dt^2)
-    c_norm <- norm_operators - 1
-    # enforce non-negativity only at idx
-    c_delta <- -delta_vector[idx]
-    c_alpha <- as.vector(-alpha_kernel_matrix[idx, idx])
-    c_beta  <- as.vector(-beta_kernel_matrix[idx, idx])
+    alpha_vec <- as.vector(K_PC %*% Avec)
+    beta_vec  <- as.vector(K_PC %*% Bvec)
+    c_norm <- norm(A + B, type = "F") - 0.9999
+    c_delta <- -delta_vector
+    c_alpha <- -alpha_vec
+    c_beta  <- -beta_vec
     return(c(c_norm, c_delta, c_alpha, c_beta))
   }
   
   # ------------------------------------------------------------------
   # Initialization
   # ------------------------------------------------------------------
-  init_delta <- rep(0.01/M, M)
-  init_alpha <- matrix(0.5/M, M,M)
-  init_beta  <- matrix(0.5/M, M,M)               
+  init_delta <- c(0.01, rep(0, M-1))
+  init_alpha <- matrix(0, M,M)
+  init_beta  <- matrix(0, M,M)               
   
   # Flatten
   init_theta <- c(init_delta, as.vector(init_alpha), as.vector(init_beta))
@@ -114,15 +106,14 @@ fgarch_est_ls <- function(y_matrix_squared, PC, check_points = 40, maxeval = 100
   # ------------------------------------------------------------------
   # Optimization
   # ------------------------------------------------------------------
-  optim_res <- nloptr(
+  optim_res <- nloptr::nloptr(
     x0 = init_theta,
     eval_f = obj_wrapper,
-    lb = c(rep(1e-4,M),rep(0,length(init_theta)-M)),
+    lb = c(1e-4,rep(0,M-1),rep(0,length(init_theta)-M)),
     ub = rep(1, length(init_theta)),
     eval_g_ineq = stationarity_positivity_constraint,
     opts = list(
       algorithm = "NLOPT_LN_COBYLA",
-      xtol_rel = 1e-6,
       maxeval = maxeval
     )
   )
