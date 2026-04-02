@@ -12,7 +12,8 @@
 #   list with estimated delta, alpha, beta and nloptr output
 # --------------------------------------------------
 
-fgarch_est_ls <- function(y_matrix_squared, PC, maxeval = 1000) {
+fgarch_est_ls <- function(y_matrix_squared, PC, maxeval = 1000,
+                          positivity_grid_size = NULL, constrain_positivity = TRUE) {
   
   # --------------------------------------------------
   # Ensure PC is a matrix
@@ -27,11 +28,24 @@ fgarch_est_ls <- function(y_matrix_squared, PC, maxeval = 1000) {
   T_grid <- ncol(y_matrix_squared)
   dt <- 1 / (T_grid - 1)
   
-  PC_t <- t(PC) #avoids computing inside of the loop
-  PC_dt <- PC*dt
-  K_PC <- kronecker(PC, PC)
+  # --------------------------------------------------
+  # Positivity grid
+  # --------------------------------------------------
+  if (is.null(positivity_grid_size) || positivity_grid_size >= T_grid) {
+    positivity_idx <- seq_len(T_grid)
+  } else {
+    positivity_idx <- unique(round(seq(1, T_grid, length.out = positivity_grid_size)))
+  }
   
-  scores <- y_matrix_squared %*% PC_dt
+  T_pos <- length(positivity_idx)
+  PC_pos <- PC[positivity_idx, , drop = FALSE]
+  
+  # --------------------------------------------------
+  # Kronecker products
+  # --------------------------------------------------
+  K_PC_pos <- kronecker(PC_pos, PC_pos)  # (T_pos^2) x (M^2)
+  
+  scores <- y_matrix_squared %*% PC * dt
   n <- as.numeric(nrow(scores))
   M <- as.numeric(ncol(scores))
   
@@ -47,7 +61,7 @@ fgarch_est_ls <- function(y_matrix_squared, PC, maxeval = 1000) {
     sigma[1, ] <- delta + A %*% as.numeric(y[1, ]) + B %*% sigma_initial
     
     # remaining steps
-    if (n > 1) {
+    if (n > 2) {
       for (i in 2:(n-1)) {
         sigma[i, ] <- delta + A %*% as.numeric(y[i, ]) + B %*% as.numeric(sigma[i-1, ])
       }
@@ -68,11 +82,15 @@ fgarch_est_ls <- function(y_matrix_squared, PC, maxeval = 1000) {
     A     <- matrix(params[(M + 1):(M + M^2)], nrow = M, ncol = M)
     B     <- matrix(params[(M + M^2 + 1):(M + 2 * M^2)], nrow = M, ncol = M)
     
+    if (norm(A + B, type = "F") >= 0.9999) {
+      return(1e12)
+    }
+    
     # Calculate Variance
     sigma <- garch_variance(delta, A, B, scores, n, M)
     
     # Calculate Objective
-    resid <- scores[-1, ] - sigma
+    resid <- scores[-1, , drop = FALSE] - sigma
     return(sum(resid^2))
   }
   
@@ -83,22 +101,28 @@ fgarch_est_ls <- function(y_matrix_squared, PC, maxeval = 1000) {
     
     A <- matrix(Avec, nrow = M, ncol = M)
     B <- matrix(Bvec, nrow = M, ncol = M)
-    delta_vector <- as.vector(PC%*%delta)
-    alpha_vec <- as.vector(K_PC %*% Avec)
-    beta_vec  <- as.vector(K_PC %*% Bvec)
+    
     c_norm <- norm(A + B, type = "F") - 0.9999
-    c_delta <- -delta_vector
-    c_alpha <- -alpha_vec
-    c_beta  <- -beta_vec
-    return(c(c_norm, c_delta, c_alpha, c_beta))
+    if (constrain_positivity){
+      delta_vector <- as.vector(PC_pos%*%delta)
+      alpha_vec <- as.vector(K_PC_pos %*% Avec)
+      beta_vec  <- as.vector(K_PC_pos %*% Bvec)
+      
+      c_delta <- 1e-4 - delta_vector
+      c_alpha <- -alpha_vec
+      c_beta  <- -beta_vec
+      return(c(c_norm, c_delta, c_alpha, c_beta))
+    }else{
+      return(c_norm)
+    }
   }
   
   # ------------------------------------------------------------------
   # Initialization
   # ------------------------------------------------------------------
   init_delta <- c(0.01, rep(0, M-1))
-  init_alpha <- matrix(0, M,M)
-  init_beta  <- matrix(0, M,M)               
+  init_alpha <- matrix(c(0.4, rep(0,M^2-1)), M,M)
+  init_beta  <- matrix(c(0.4, rep(0,M^2-1)), M,M)             
   
   # Flatten
   init_theta <- c(init_delta, as.vector(init_alpha), as.vector(init_beta))
@@ -109,12 +133,14 @@ fgarch_est_ls <- function(y_matrix_squared, PC, maxeval = 1000) {
   optim_res <- nloptr::nloptr(
     x0 = init_theta,
     eval_f = obj_wrapper,
-    lb = c(1e-4,rep(0,M-1),rep(0,length(init_theta)-M)),
+    lb = rep(-1, length(init_theta)),
     ub = rep(1, length(init_theta)),
     eval_g_ineq = stationarity_positivity_constraint,
     opts = list(
       algorithm = "NLOPT_LN_COBYLA",
-      maxeval = maxeval
+      maxeval = maxeval,
+      xtol_rel = 0,
+      print_level = 0
     )
   )
   

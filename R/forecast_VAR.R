@@ -54,7 +54,7 @@ forecast_VAR <- function(y_eval_squared, y_train_squared, fitted_values, quantil
   Q <- dim(quantile_matrix)[1]
   VAR_forecast <- array(NA, dim = c(Q,N,T_grid_points))
   for (q in 1:Q){
-    VAR_forecast[q,,] <- quantile_matrix[q,]*sqrt(sigma_squared)
+    VAR_forecast[q,,] <- sweep(sqrt(sigma_squared), 2, as.vector(quantile_matrix[q,]), "*")
   }
   
   # --------------------------------------------------

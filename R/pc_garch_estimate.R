@@ -82,7 +82,7 @@ pc_garch_estimate <- function(y, PC, maxeval = 1000) {
     ub          = rep(1, 3 * M),
     opts = list(
       algorithm = "NLOPT_LN_COBYLA",
-      xtol_rel  = 1e-6,
+      xtol_rel  = 0,
       maxeval   = maxeval
     )
   )

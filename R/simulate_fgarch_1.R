@@ -47,7 +47,8 @@ simulate_fgarch_1 <- function(
   t_grid <- seq(0, 1, length.out = T_grid_points)
   t_difference <- 1 / (T_grid_points - 1)
   
-  delta_vector <- rep(0.01, T_grid_points)
+  delta_function <- function(t) 0.01 * sqrt(30) * t * (1-t)
+  delta_vector <- delta_function(t_grid)
   alpha_function <- beta_function <- function(t, s) 12*t*(1-t)*s*(1-s)
   
   alpha_kernel_matrix <- outer(t_grid, t_grid, alpha_function)

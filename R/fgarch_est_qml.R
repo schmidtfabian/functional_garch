@@ -127,7 +127,8 @@ fgarch_est_qml <- function(y_matrix_squared, PC, maxeval = 1000) {
     eval_g_ineq = stationarity_constraint,
     opts = list(
       algorithm = "NLOPT_LN_COBYLA",
-      maxeval = maxeval
+      maxeval = maxeval,
+      xtol_rel = 0
     )
   )
   

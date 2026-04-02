@@ -40,6 +40,7 @@ forecast_pc_garch <- function(lambda_fitted, y_eval, y_train,
     }
   }
   return(list(
-    y_forecast_VAR = y_forecast_VAR
+    y_forecast_VAR = y_forecast_VAR,
+    lambda_forecast = lambda_forecast
   ))
 }

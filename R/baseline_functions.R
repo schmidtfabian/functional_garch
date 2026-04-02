@@ -49,9 +49,9 @@ baseline_compute <- function(y_squared) {
   
   # Ensure positivity of each PC
   for (k in 1:ncol(eigenvectors)) {
-    temp <- eigenvectors[,k]
-    temp[temp < 0] <- 0
-    eigenvectors[,k] <- temp
+    min_value <- min(eigenvectors[,k])
+    shift <- min(min_value, 0)
+    eigenvectors[,k] <- eigenvectors[,k] - shift
   }
   
   # --------------------------------------------------
