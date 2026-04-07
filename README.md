@@ -1,4 +1,4 @@
-# Functional GARCH Models and their Application to intraday value-at-risk
+# On Functional GARCH Models and Their Application to Intraday Value-at-Risk
 This repository contains the codes of my master thesis "On Functional GARCH Models and Their Application to Intraday Value-at-Risk".
 
 Quick overview over the files contained in this repository:
