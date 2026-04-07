@@ -1,7 +1,7 @@
 # --------------------------------------------------
 # simulate_fgarch_2()
 #
-# Simulates functional GARCH process with OU innovations
+# Simulates functional GARCH process with OU-type innovations
 #
 # Args:
 #   burn_in      : integer, burn-in sample size
@@ -47,10 +47,10 @@ simulate_fgarch_2 <- function(
   t_grid <- seq(0, 1, length.out = T_grid_points)
   t_difference <- 1 / (T_grid_points - 1)
   
-  delta_function <- function(t) (t - 0.5)^2 + 0.1
+  delta_function <- function(t) exp(-(t)^2)
   delta_vector <- delta_function(t_grid)
-  alpha_function <- function(s, t) (s - 0.5)^2+(t - 0.5)^2+0.2
-  beta_function <- function(s, t) (s - 0.5)^2+(t - 0.5)^2+0.4
+  alpha_function <- function(s, t) 0.5*exp(-(s-t)^2)
+  beta_function <- function(s, t) 12*t*(1-t)*s*(1-s)
   
   alpha_kernel_matrix <- outer(t_grid, t_grid, alpha_function)
   beta_kernel_matrix  <- outer(t_grid, t_grid, beta_function)

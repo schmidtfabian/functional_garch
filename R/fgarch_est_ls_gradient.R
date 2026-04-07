@@ -32,7 +32,7 @@ fgarch_est_ls_test <- function(y_matrix_squared,
                           PC,
                           maxeval = 1000,
                           tau = 0.9999,
-                          positivity_grid_size = 20,
+                          positivity_grid_size = 100,
                           lb_theta = -1,
                           ub_theta = 1,
                           print_level = 0) {
@@ -49,16 +49,7 @@ fgarch_est_ls_test <- function(y_matrix_squared,
   # --------------------------------------------------
   n <- nrow(y_matrix_squared)
   T_grid <- ncol(y_matrix_squared)
-  
-  if (nrow(PC) != T_grid) {
-    stop("nrow(PC) must equal ncol(y_matrix_squared).")
-  }
-  
   M <- ncol(PC)
-  
-  if (tau <= 0 || tau >= 1) {
-    stop("tau must satisfy 0 < tau < 1.")
-  }
   
   # --------------------------------------------------
   # Positivity grid
@@ -159,7 +150,7 @@ fgarch_est_ls_test <- function(y_matrix_squared,
     numDeriv::grad(
       func = obj_wrapper,
       x = params,
-      method = "Richardson"
+      method = "simple"
     )
   }
   
@@ -188,10 +179,7 @@ fgarch_est_ls_test <- function(y_matrix_squared,
   
   # --------------------------------------------------
   # Constant Jacobian of positivity constraints
-  #
-  # [ -PC_pos         0              0      ]
-  # [   0        -(PC_pos⊗PC_pos)    0      ]
-  # [   0             0         -(PC_pos⊗PC_pos) ]
+  # (This follows from the Kronecker representation)
   # --------------------------------------------------
   build_positivity_jacobian <- function(PC_pos, K_PC_pos) {
     T_pos <- nrow(PC_pos)
@@ -227,6 +215,7 @@ fgarch_est_ls_test <- function(y_matrix_squared,
   # --------------------------------------------------
   # Smooth stationarity constraint:
   #   ||A + B||_F^2 - tau^2 <= 0
+  # A smoothed constraint is used so that the gradient is simpler to compute
   # --------------------------------------------------
   stationarity_constraint <- function(params) {
     pars <- unpack_params(params, M)

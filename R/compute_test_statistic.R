@@ -32,7 +32,7 @@ compute_test_statistic <- function(y_forecast, quantiles_VAR, y_eval,
     norm_sq <- sum(mean_indicator_minus_quantile[i,]^2) * dt
     test_T_n[i] <- n * norm_sq
     
-    ## Covariance matrix over t = 1,...,T
+    ## Covariance matrix
     cov_matrix_indicator <- cov(indicator_arr[i, , ])*dt
     eigenvals <- eigen(cov_matrix_indicator, only.values = TRUE, symmetric = TRUE)$values
     

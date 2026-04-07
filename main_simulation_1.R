@@ -1,16 +1,13 @@
 # --------------------------------------------------
-# Master Thesis — FGARCH Simulation
+# Master Thesis — FGARCH Simulation 1
 # Author: Fabian Christian Schmidt
 # --------------------------------------------------
 
 rm(list = ls())
 
-install.packages(
-  setdiff(
-    c("rstudioapi", "ggplot2", "dplyr", "tidyr", "nloptr"),
-    rownames(installed.packages())
-  )
-)
+install.packages(setdiff(c("rstudioapi","ggplot2", "dplyr", "tidyr", "nloptr",
+                           "numDeriv", "RSpectra"),
+                         rownames(installed.packages())))
 
 library(ggplot2)
 
@@ -35,12 +32,12 @@ source_dir <- function(path) {
 
 source_dir("R")
 
-N_sim <- 2
+N_sim <- 100
 quantiles_VAR <- c(0.025, 0.01, 0.005)
 sizes_training_sample <- c(250,500,1000)
 set.seed(9372)
 
-nu_vec <- c(5,10,25)
+nu_vec <- c(3,5,25)
 
 deviation_VAR <- test1 <- array(
   NA_real_,
@@ -163,7 +160,7 @@ for (q in 1:N_sim) {
         delta_sim = NULL, delta_est = NULL,
         alpha_sim = NULL, alpha_est = NULL,
         beta_sim = NULL, beta_est = NULL,
-        compute_msd = FALSE
+        compute_tests_other = FALSE
       )
       
       test_VaR_qml <- compute_test_statistic(
@@ -171,7 +168,7 @@ for (q in 1:N_sim) {
         delta_sim = NULL, delta_est = NULL,
         alpha_sim = NULL, alpha_est = NULL,
         beta_sim = NULL, beta_est = NULL,
-        compute_msd = FALSE
+        compute_tests_other = FALSE
       )
       
       #### Save results directly ####
@@ -279,12 +276,12 @@ for (j in seq_along(sizes_training_sample)) {   # sample size
 
 latex_tab <- c(
   "\\begin{table}[ht]",
-  "\\label{TableMeanBiasSDLS}",
   "\\centering",
   "\\caption{Mean bias and standard deviation of estimators for LS}",
+  "\\label{TableMeanBiasSDLS}",
   "\\begin{tabular}{c ccc ccc ccc}",
   "\\toprule",
-  "\\multirow{2}{*}{Sample size} & \\multicolumn{3}{c}{$\\nu = 5$} & \\multicolumn{3}{c}{$\\nu = 10$} & \\multicolumn{3}{c}{$\\nu = 25$} \\\\",
+  "\\multirow{2}{*}{\\makecell[c]{Sample\\\\size}} & \\multicolumn{3}{c}{$\\nu = 3$} & \\multicolumn{3}{c}{$\\nu = 5$} & \\multicolumn{3}{c}{$\\nu = 25$} \\\\",
   "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7} \\cmidrule(lr){8-10}",
   "& $d$ & $a$ & $b$ & $d$ & $a$ & $b$ & $d$ & $a$ & $b$ \\\\",
   "\\midrule",
@@ -318,12 +315,12 @@ for (j in seq_along(sizes_training_sample)) {   # sample size
 
 latex_tab <- c(
   "\\begin{table}[ht]",
-  "\\label{TableMeanBiasSDLS}",
   "\\centering",
   "\\caption{Mean bias and standard deviation of estimators for QML}",
+  "\\label{TableMeanBiasSDQML}",
   "\\begin{tabular}{c ccc ccc ccc}",
   "\\toprule",
-  "\\multirow{2}{*}{Sample size} & \\multicolumn{3}{c}{$\\nu = 5$} & \\multicolumn{3}{c}{$\\nu = 10$} & \\multicolumn{3}{c}{$\\nu = 25$} \\\\",
+  "\\multirow{2}{*}{\\makecell[c]{Sample\\\\size}} & \\multicolumn{3}{c}{$\\nu = 3$} & \\multicolumn{3}{c}{$\\nu = 5$} & \\multicolumn{3}{c}{$\\nu = 25$} \\\\",
   "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7} \\cmidrule(lr){8-10}",
   "& $d$ & $a$ & $b$ & $d$ & $a$ & $b$ & $d$ & $a$ & $b$ \\\\",
   "\\midrule",
@@ -386,14 +383,14 @@ for (j in seq_along(sizes_training_sample)) {   # sample size
 
 latex_tab <- c(
   "\\begin{table}[ht]",
-  "\\label{TablepvalueLS}",
   "\\centering",
   "\\caption{Mean p-value and standard deviation for LS}",
+  "\\label{TablepvalueLS}",
   "\\begin{tabular}{c ccc ccc ccc}",
   "\\toprule",
-  "\\multirow{2}{*}{Sample size} & \\multicolumn{3}{c}{$\\nu = 5$} & \\multicolumn{3}{c}{$\\nu = 10$} & \\multicolumn{3}{c}{$\\nu = 25$} \\\\",
+  "\\multirow{2}{*}{\\makecell[c]{Sample\\\\size}} & \\multicolumn{3}{c}{$\\nu = 3$} & \\multicolumn{3}{c}{$\\nu = 5$} & \\multicolumn{3}{c}{$\\nu = 25$} \\\\",
   "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7} \\cmidrule(lr){8-10}",
-  "& $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$ & $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$ & $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$ \\\\",
+  "& $q_{0.025}$ & $\\tau_{0.01}$ & $\\tau_{0.005}$ & $\\tau_{0.025}$ & $\\tau_{0.01}$ & $\\tau_{0.005}$ & $\\tau_{0.025}$ & $\\tau_{0.01}$ & $\\tau_{0.005}$ \\\\",
   "\\midrule",
   rows,
   "\\bottomrule",
@@ -426,14 +423,14 @@ for (j in seq_along(sizes_training_sample)) {   # sample size
 
 latex_tab <- c(
   "\\begin{table}[ht]",
-  "\\label{TablepvalueQML}",
   "\\centering",
   "\\caption{Mean p-value and standard deviation for QML}",
+  "\\label{TablepvalueQML}",
   "\\begin{tabular}{c ccc ccc ccc}",
   "\\toprule",
-  "\\multirow{2}{*}{Sample size} & \\multicolumn{3}{c}{$\\nu = 5$} & \\multicolumn{3}{c}{$\\nu = 10$} & \\multicolumn{3}{c}{$\\nu = 25$} \\\\",
+  "\\multirow{2}{*}{\\makecell[c]{Sample\\\\size}} & \\multicolumn{3}{c}{$\\nu = 3$} & \\multicolumn{3}{c}{$\\nu = 5$} & \\multicolumn{3}{c}{$\\nu = 25$} \\\\",
   "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7} \\cmidrule(lr){8-10}",
-  "& $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$ & $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$ & $q_{0.025}$ & $q_{0.01}$ & $q_{0.005}$ \\\\",
+  "& $q_{0.025}$ & $\\tau_{0.01}$ & $\\tau_{0.005}$ & $\\tau_{0.025}$ & $\\tau_{0.01}$ & $\\tau_{0.005}$ & $\\tau_{0.025}$ & $\\tau_{0.01}$ & $\\tau_{0.005}$ \\\\",
   "\\midrule",
   rows,
   "\\bottomrule",
@@ -447,7 +444,7 @@ writeLines(latex_tab, file.path(bld_dir, "mean_p_value_qml_table.tex"))
 
 
 #### Compare epsilon functions ####
-epsilon_fitted_simulation <- y_matrix / sqrt(sigma_squared[1001:1500,])
+epsilon_fitted_simulation <- y_matrix / sqrt(sigma_squared[1001:2000,])
 epsilon_fitted_simulation[is.na(epsilon_fitted_simulation)] <- 0
 quantile_matrix_simulation <- calculate_bootstrap(
   epsilon_fitted_simulation, Bootstrap_samples, quantiles_VAR
